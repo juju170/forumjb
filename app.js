@@ -12,8 +12,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyC8uiIvWOZPcSZOzCGnlRMA7WJ7TIQfy5s",
     authDomain: "tts-indonesia-bf14e.firebaseapp.com",
     projectId: "tts-indonesia-bf14e",
-    storageBucket: "tts-indonesia-bf14e.firebasestorage.app",
-    messagingSenderId: "240052198349",
+    storageBucket: "tts-indonesia-bf14e.appspot.com",    messagingSenderId: "240052198349",
     appId: "1:240052198349:web:112553f8ca408b2fcc4284"
 };
 
