@@ -22,6 +22,52 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+// ==========================
+// 🔐 SISTEM LOGIN & REGISTER
+// ==========================
+
+async function handleAuthEvents() {
+  const loginBtn = document.getElementById("loginBtn");
+  const registerBtn = document.getElementById("registerBtn");
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  const msg = document.getElementById("authMessage");
+
+  if (!loginBtn || !registerBtn) return; // jika bukan di halaman auth.html
+
+  // Login
+  loginBtn.addEventListener("click", async () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      msg.textContent = "✅ Login berhasil!";
+      setTimeout(() => loadPage("home"), 1000);
+    } catch (e) {
+      msg.textContent = "❌ Gagal login: " + e.message;
+    }
+  });
+
+  // Register
+  registerBtn.addEventListener("click", async () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      msg.textContent = "✅ Akun berhasil dibuat!";
+      setTimeout(() => loadPage("home"), 1000);
+    } catch (e) {
+      msg.textContent = "❌ Gagal daftar: " + e.message;
+    }
+  });
+}
+
 console.log("✅ Firebase terhubung!");
 
 // ==============================
@@ -30,16 +76,17 @@ console.log("✅ Firebase terhubung!");
 const content = document.getElementById("content");
 const buttons = document.querySelectorAll(".nav-btn");
 
+async function loadPage(page) {
+  try {
+    const res = await fetch(`pages/${page}.html`);
+    const html = await res.text();
+    content.innerHTML = html;
+    handleAuthEvents(); // aktifkan listener login/register kalau di halaman auth
+  } catch (e) {
+    content.innerHTML = `<p style='text-align:center;color:red;'>Halaman gagal dimuat 😢</p>`;
+  }
+}
+
 buttons.forEach(btn => {
-  btn.addEventListener("click", async () => {
-    const page = btn.dataset.page;
-    try {
-      const res = await fetch(`pages/${page}.html`);
-      const html = await res.text();
-      content.innerHTML = html;
-      console.log(`➡️ Pindah ke halaman: ${page}`);
-    } catch (e) {
-      content.innerHTML = `<p style='text-align:center;color:red;'>Halaman gagal dimuat 😢</p>`;
-    }
-  });
+  btn.addEventListener("click", () => loadPage(btn.dataset.page));
 });
