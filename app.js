@@ -63,8 +63,9 @@ async function handleAuthEvents() {
       msg.textContent = "✅ Akun berhasil dibuat!";
       setTimeout(() => loadPage("home"), 1000);
     } catch (e) {
-      msg.textContent = "❌ Gagal daftar: " + e.message;
-    }
+  console.error("❌ Firebase error:", e);  // Tambah baris ini
+  msg.textContent = "❌ Gagal daftar: " + e.code;
+}
   });
 }
 
