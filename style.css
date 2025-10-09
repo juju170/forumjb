@@ -59,3 +59,43 @@ main {
   height: 28px;
   margin-top: 6px;
 }
+/* ============ AUTH ============ */
+.auth-container {
+  padding: 20px;
+  text-align: center;
+  margin-top: 60px;
+}
+
+.auth-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.auth-box input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.auth-box button {
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background-color: #008cff;
+  color: white;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.auth-box button.secondary {
+  background-color: #ddd;
+  color: #333;
+}
+
+.auth-box button:hover {
+  opacity: 0.9;
+}
