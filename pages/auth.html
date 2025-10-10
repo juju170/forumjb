@@ -10,3 +10,49 @@
 
   <p id="authMessage" style="text-align:center; color: #333; margin-top:10px;"></p>
 </section>
+
+<!-- Tambahkan ini biar bisa jalan mandiri -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC8uiIvWOZPcSZOzCGnlRMA7WJ7TIQfy5s",
+    authDomain: "tts-indonesia-bf14e.firebaseapp.com",
+    projectId: "tts-indonesia-bf14e",
+    storageBucket: "tts-indonesia-bf14e.appspot.com",
+    messagingSenderId: "240052198349",
+    appId: "1:240052198349:web:112553f8ca408b2fcc4284"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  const email = document.getElementById("email");
+  const password = document.getElementById("password");
+  const msg = document.getElementById("authMessage");
+  const loginBtn = document.getElementById("loginBtn");
+  const registerBtn = document.getElementById("registerBtn");
+
+  console.log("✅ Firebase aktif di auth.html");
+
+  loginBtn.addEventListener("click", async () => {
+    try {
+      await signInWithEmailAndPassword(auth, email.value, password.value);
+      msg.textContent = "✅ Login berhasil!";
+    } catch (e) {
+      console.error("❌ Gagal login:", e);
+      msg.textContent = "❌ Gagal login: " + e.code;
+    }
+  });
+
+  registerBtn.addEventListener("click", async () => {
+    try {
+      await createUserWithEmailAndPassword(auth, email.value, password.value);
+      msg.textContent = "✅ Akun berhasil dibuat!";
+    } catch (e) {
+      console.error("❌ Gagal daftar:", e);
+      msg.textContent = "❌ Gagal daftar: " + e.code;
+    }
+  });
+</script>
