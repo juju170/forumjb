@@ -379,3 +379,6 @@ onAuthStateChanged(auth, (user) => {
     loadPage("auth");
   }
 });
+  });
+} // ⬅️ ini penutup fungsi loadHomePage()
+console.log("✅ app.js selesai dimuat");
