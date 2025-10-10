@@ -106,9 +106,10 @@ function showUserProfile(user) {
         console.error("❌ Gagal logout:", e);
       }
     });
+  } else {
+    console.warn("⚠️ Tombol logout belum ditemukan di halaman.");
   }
 }
-
 // ==============================
 // 🧭 SISTEM NAVIGASI HALAMAN
 // ==============================
