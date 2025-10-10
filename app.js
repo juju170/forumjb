@@ -1,96 +1,135 @@
 // ==============================
-// 🔥 FIREBASE CONFIG (versi ringan)
+// 🔥 IMPORT & KONFIGURASI FIREBASE
 // ==============================
-
-// Import Firebase Modular SDK dari CDN
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-// Konfigurasi dari project Firebase kamu
+// 🧩 Konfigurasi Firebase kamu (pastikan sudah benar)
 const firebaseConfig = {
   apiKey: "AIzaSyC8uiIvWOZPcSZOzCGnlRMA7WJ7TIQfy5s",
     authDomain: "tts-indonesia-bf14e.firebaseapp.com",
     projectId: "tts-indonesia-bf14e",
-    storageBucket: "tts-indonesia-bf14e.appspot.com",    
+    storageBucket: "tts-indonesia-bf14e.firebasestorage.app",
     messagingSenderId: "240052198349",
-    appId: "1:240052198349:web:112553f8ca408b2fcc4284"
+    appId: "1:240052198349:web:112553f8ca408b2fcc4284",    
 };
 
-// Inisialisasi Firebase
+// 🔥 Inisialisasi
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+console.log("✅ Firebase terhubung!");
 
-// 🔍 Cek status login user
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    console.log("👤 Login terdeteksi:", user.email);
-    // Saat sudah login, otomatis load halaman home
-    loadPage("home");
-  } else {
-    console.log("🚪 Belum login, arahkan ke halaman auth...");
-    loadPage("auth");
+// ==============================
+// 🌐 ELEMENT NAVIGASI & PEMUAT HALAMAN
+// ==============================
+const content = document.getElementById("content");
+const buttons = document.querySelectorAll(".nav-btn");
+
+// Fungsi muat halaman
+async function loadPage(page) {
+  try {
+    const res = await fetch(`pages/${page}.html`);
+    const html = await res.text();
+    content.innerHTML = html;
+
+    // Set tombol aktif
+    buttons.forEach(b => b.classList.remove("active"));
+    const activeBtn = document.querySelector(`.nav-btn[data-page="${page}"]`);
+    if (activeBtn) activeBtn.classList.add("active");
+
+    // Jalankan logika halaman tertentu
+    if (page === "auth") handleAuthEvents();
+    if (page === "profile" && auth.currentUser) showUserProfile(auth.currentUser);
+    if (page === "home") loadHomePage();
+
+  } catch (e) {
+    content.innerHTML = `<p style='text-align:center;color:red;'>Halaman gagal dimuat 😢</p>`;
+    console.error("❌ Gagal memuat halaman:", e);
   }
+}
+
+// Klik tombol navigasi
+buttons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const page = btn.getAttribute("data-page");
+    loadPage(page);
+  });
 });
 
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-
-// ==========================
-// 🔐 SISTEM LOGIN & REGISTER
-// ==========================
-
-async function handleAuthEvents() {
-  console.log("🔄 handleAuthEvents dijalankan");
-  const loginBtn = document.getElementById("loginBtn");
+// ==============================
+// 👤 HALAMAN LOGIN / REGISTER
+// ==============================
+function handleAuthEvents() {
   const registerBtn = document.getElementById("registerBtn");
+  const loginBtn = document.getElementById("loginBtn");
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
-  const msg = document.getElementById("authMessage");
+  const msg = document.getElementById("msg");
 
-  if (!loginBtn || !registerBtn) return; // jika bukan di halaman auth.html
+  if (registerBtn) {
+    registerBtn.addEventListener("click", async () => {
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        msg.textContent = "✅ Akun berhasil dibuat!";
+        setTimeout(() => (window.location.href = "../index.html"), 1000);
+      } catch (e) {
+        console.error("❌ Firebase error:", e);
+        msg.textContent = "❌ Gagal daftar: " + e.code;
+      }
+    });
+  }
 
-  // Login
-  loginBtn.addEventListener("click", async () => {
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      msg.textContent = "✅ Login berhasil!";
-      setTimeout(() => loadPage("home"), 1000);
-    } catch (e) {
-      msg.textContent = "❌ Gagal login: " + e.message;
-    }
-  });
-
-  // Register
-  registerBtn.addEventListener("click", async () => {
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      msg.textContent = "✅ Akun berhasil dibuat!";
-      setTimeout(() => loadPage("home"), 1000);
-    } catch (e) {
-  console.error("❌ Firebase error:", e);  // Tambah baris ini
-  msg.textContent = "❌ Gagal daftar: " + e.code;
+  if (loginBtn) {
+    loginBtn.addEventListener("click", async () => {
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        msg.textContent = "✅ Login berhasil!";
+        setTimeout(() => (window.location.href = "../index.html"), 1000);
+      } catch (e) {
+        console.error("❌ Firebase error:", e);
+        msg.textContent = "❌ Gagal login: " + e.code;
+      }
+    });
+  }
 }
-  });
-}
-
-console.log("✅ Firebase terhubung!");
 
 // ==============================
 // 👤 PROFIL USER & LOGOUT
 // ==============================
 function showUserProfile(user) {
-  // ==============================
+  const emailSpan = document.getElementById("userEmail");
+  if (emailSpan) emailSpan.textContent = user.email;
+
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await signOut(auth);
+        alert("Anda telah keluar.");
+        window.location.href = "pages/auth.html";
+      } catch (e) {
+        console.error("❌ Gagal logout:", e);
+      }
+    });
+  } else {
+    console.warn("⚠️ Tombol logout belum ditemukan di halaman.");
+  }
+}
+
+// ==============================
 // 🏠 HALAMAN BERANDA (DUMMY POST)
 // ==============================
 function loadHomePage() {
@@ -127,9 +166,8 @@ function loadHomePage() {
   ];
 
   function renderPosts(list) {
-    postList.innerHTML = list
-      .map(
-        (p) => `
+    postList.innerHTML = list.map(
+      p => `
       <div class="post-card">
         <div class="post-header">
           <img src="../assets/icons/profile.png" class="post-avatar">
@@ -139,11 +177,9 @@ function loadHomePage() {
         <img src="${p.gambar}" class="post-image">
       </div>
     `
-      )
-      .join("");
+    ).join("");
   }
 
-  // Default tampil: Mengikuti
   renderPosts(postinganMengikuti);
 
   btnMengikuti.addEventListener("click", () => {
@@ -158,71 +194,16 @@ function loadHomePage() {
     renderPosts(postinganJelajahi);
   });
 }
-  const emailSpan = document.getElementById("userEmail");
-  if (emailSpan) {
-    emailSpan.textContent = user.email;
-  }
 
-  const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      try {
-        await signOut(auth);
-        alert("Anda telah keluar.");
-        window.location.href = "pages/auth.html";
-      } catch (e) {
-        console.error("❌ Gagal logout:", e);
-      }
-    });
+// ==============================
+// 🚪 CEK STATUS LOGIN USER
+// ==============================
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    console.log("👤 Login terdeteksi:", user.email);
+    loadPage("home");
   } else {
-    console.warn("⚠️ Tombol logout belum ditemukan di halaman.");
+    console.log("🚪 Belum login, arahkan ke halaman auth...");
+    loadPage("auth");
   }
-}
-// ==============================
-// 🧭 SISTEM NAVIGASI HALAMAN
-// ==============================
-const content = document.getElementById("content");
-const buttons = document.querySelectorAll(".nav-btn");
-
-async function loadPage(page) {
-  try {
-    const res = await fetch(`pages/${page}.html`);
-    const html = await res.text();
-    content.innerHTML = html;
-
-    // 🟢 Set tombol aktif
-    buttons.forEach(b => b.classList.remove("active"));
-    const activeBtn = document.querySelector(`.nav-btn[data-page="${page}"]`);
-    if (activeBtn) activeBtn.classList.add("active");
-
-    // 🟢 Jalankan authEvents kalau di halaman auth
-    if (page === "auth") handleAuthEvents();
-
-    // 🟢 Tampilkan data user di profil
-    if (page === "profile" && auth.currentUser) {
-      showUserProfile(auth.currentUser);
-    }
-
-    if (page === "home") {
-  loadHomePage();
-    }
-
-  } catch (e) {
-    content.innerHTML = `<p style='text-align:center;color:red;'>Halaman gagal dimuat 😢</p>`;
-    console.error("❌ Gagal memuat halaman:", e);
-  }
-}
-
-buttons.forEach(btn => {
-  btn.addEventListener("click", () => loadPage(btn.dataset.page));
 });
-
-async function logoutUser() {
-  try {
-    await signOut(auth);
-    alert("Anda telah keluar.");
-    window.location.href = "pages/auth.html";
-  } catch (e) {
-    console.error("❌ Gagal logout:", e);
-  }
-}
