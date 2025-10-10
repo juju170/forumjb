@@ -50,6 +50,7 @@ async function loadPage(page) {
     if (page === "auth") handleAuthEvents();
     if (page === "profile" && auth.currentUser) showUserProfile(auth.currentUser);
     if (page === "home") loadHomePage();
+    if (page === "post") loadPostPage();
 
   } catch (e) {
     content.innerHTML = `<p style='text-align:center;color:red;'>Halaman gagal dimuat 😢</p>`;
