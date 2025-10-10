@@ -276,7 +276,7 @@ document.querySelectorAll(".send-comment").forEach((btn) => {
     renderPosts(snapshot);
   });
 
-  // ==============================
+// ==============================
   // 🔘 Tombol Filter (sementara dummy)
   // ==============================
   if (btnMengikuti && btnJelajahi) {
@@ -290,7 +290,7 @@ document.querySelectorAll(".send-comment").forEach((btn) => {
       btnMengikuti.classList.remove("active");
     });
   }
-}
+} // ⬅️ Tambahkan ini untuk menutup fungsi loadHomePage()
 
 // ==============================
 // ➕ HALAMAN POST (UPLOAD & FIRESTORE)
