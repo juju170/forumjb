@@ -24,12 +24,15 @@ const auth = getAuth(app);
 
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
+// 🔍 Cek status login user
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    console.log("👤 User login:", user.email);
-    // Kamu bisa simpan data user untuk profil nanti
+    console.log("👤 Login terdeteksi:", user.email);
+    // Saat sudah login, otomatis load halaman home
+    loadPage("home");
   } else {
-    console.log("🚪 Belum login");
+    console.log("🚪 Belum login, arahkan ke halaman auth...");
+    loadPage("auth");
   }
 });
 
@@ -95,12 +98,8 @@ async function loadPage(page) {
     const html = await res.text();
     content.innerHTML = html;
 
-    // Tambahkan ini supaya event login/register aktif
-    setTimeout(() => {
-      handleAuthEvents();
-    }, 100); 
-
-    console.log(`✅ Halaman ${page} dimuat`);
+    // Biar tombol login/register hidup saat auth dimuat
+    if (page === "auth") handleAuthEvents();
   } catch (e) {
     content.innerHTML = `<p style='text-align:center;color:red;'>Halaman gagal dimuat 😢</p>`;
     console.error("❌ Gagal memuat halaman:", e);
