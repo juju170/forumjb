@@ -271,9 +271,11 @@ document.querySelectorAll(".send-comment").forEach((btn) => {
   // ==============================
   // 🔥 Ambil data Firestore realtime
   // ==============================
-  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+  const q = query(collection(db, "posts"));
   onSnapshot(q, (snapshot) => {
-    renderPosts(snapshot);
+  console.log("📦 Jumlah posting terbaca:", snapshot.size);
+  renderPosts(snapshot);
+});
   });
 
 // ==============================
