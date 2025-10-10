@@ -147,7 +147,48 @@ function loadHomePage() {
   const btnMengikuti = document.getElementById("btnMengikuti");
   const btnJelajahi = document.getElementById("btnJelajahi");
 
-  if (!postList) return;
+  if (!postList) {
+    console.error("❌ Elemen #postList tidak ditemukan di halaman home.html");
+    return;
+  }
+
+  // ✅ Ambil postingan dari Firestore
+  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+  onSnapshot(q, (snapshot) => {
+    console.log("📦 Jumlah posting terbaca:", snapshot.size);
+
+    postList.innerHTML = ""; // bersihkan daftar sebelum render ulang
+
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+
+      // Buat elemen HTML untuk setiap posting
+      const postCard = document.createElement("div");
+      postCard.classList.add("post-card");
+      postCard.innerHTML = `
+        <div class="post">
+          <img src="${data.image || 'assets/no-image.png'}" alt="gambar" class="post-img" />
+          <p class="post-text">${data.text || ''}</p>
+          <p class="post-user">👤 ${data.user || 'Anonim'}</p>
+        </div>
+      `;
+      postList.appendChild(postCard);
+    });
+  });
+
+  // 🔘 Tombol Filter (dummy dulu)
+  if (btnMengikuti && btnJelajahi) {
+    btnMengikuti.addEventListener("click", () => {
+      btnMengikuti.classList.add("active");
+      btnJelajahi.classList.remove("active");
+    });
+
+    btnJelajahi.addEventListener("click", () => {
+      btnJelajahi.classList.add("active");
+      btnMengikuti.classList.remove("active");
+    });
+  }
+}
 
   // ==============================
   // 🧠 Fungsi render posting
