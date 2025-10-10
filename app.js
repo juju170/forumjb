@@ -312,11 +312,12 @@ document.querySelectorAll(".send-comment").forEach((btn) => {
   // ==============================
   // 🔥 Ambil data Firestore realtime
   // ==============================
+
   const q = query(collection(db, "posts"));
   onSnapshot(q, (snapshot) => {
-  console.log("📦 Jumlah posting terbaca:", snapshot.size);
-  renderPosts(snapshot);
-});
+    console.log("📦 Jumlah posting terbaca:", snapshot.size);
+    renderPosts(snapshot);
+  }); // ✅ cukup satu penutup di sini
 
 // ==============================
   // 🔘 Tombol Filter (sementara dummy)
