@@ -317,7 +317,6 @@ document.querySelectorAll(".send-comment").forEach((btn) => {
   console.log("📦 Jumlah posting terbaca:", snapshot.size);
   renderPosts(snapshot);
 });
-  });
 
 // ==============================
   // 🔘 Tombol Filter (sementara dummy)
