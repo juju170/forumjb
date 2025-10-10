@@ -364,3 +364,14 @@ main {
   margin-left: 5px;
   cursor: pointer;
 }
+
+/* 🔧 Atur ukuran gambar di posting */
+.post-img {
+  width: 100%;          /* gambar selebar container */
+  height: auto;         /* tinggi menyesuaikan rasio */
+  max-height: 400px;    /* batasi tinggi maksimum */
+  object-fit: cover;    /* potong gambar biar rapi */
+  border-radius: 12px;  /* sudut lembut */
+  display: block;
+  margin: 0 auto;
+}
