@@ -162,32 +162,12 @@ function loadHomePage() {
     snapshot.forEach((doc) => {
       const data = doc.data();
 
-// Buat elemen HTML untuk setiap posting
-const postCard = document.createElement("div");
-postCard.classList.add("post-card");
-postCard.innerHTML = `
-  <div class="post">
-    <div class="post-header">
-      <img src="${data.userPhoto || 'assets/default-avatar.png'}" alt="User" class="post-avatar" />
-      <div class="post-author">${data.user || 'Anonim'}</div>
-    </div>
-    <img src="${data.image || 'assets/no-image.png'}" alt="gambar" class="post-img" />
-    <p class="post-text">${data.text || ''}</p>
-
-    <div class="post-footer">
-      <button class="like-btn">❤️</button>
-      <button class="comment-btn">💬</button>
-    </div>
-
-    <div class="comment-box hidden">
-      <input type="text" class="comment-input" placeholder="Tulis komentar..." />
-      <button class="send-comment">Kirim</button>
-    </div>
-  </div>
-`;
-postList.appendChild(postCard);
-});
-});
+// ✅ Ambil postingan dari Firestore dan render versi lengkap
+  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+  onSnapshot(q, (snapshot) => {
+    console.log("📦 Jumlah posting terbaca:", snapshot.size);
+    renderPosts(snapshot);
+  });
       
   // 🔘 Tombol Filter (dummy dulu)
   if (btnMengikuti && btnJelajahi) {
