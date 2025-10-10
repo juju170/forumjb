@@ -10,6 +10,7 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // 🧩 Konfigurasi Firebase kamu (pastikan sudah benar)
 const firebaseConfig = {
@@ -169,7 +170,6 @@ function loadHomePage() {
 // ==============================
 // ➕ HALAMAN POST (UPLOAD + FIRESTORE)
 // ==============================
-import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 function loadPostPage() {
   const postText = document.getElementById("postText");
