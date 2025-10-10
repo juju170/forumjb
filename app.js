@@ -231,32 +231,42 @@ function renderPosts(snapshot) {
     });
   });
 
-  // 💬 KIRIM KOMENTAR KE FIRESTORE
-  document.querySelectorAll(".send-comment").forEach((btn) => {
-    btn.addEventListener("click", async (e) => {
-      const card = e.target.closest(".post-card");
-      const id = card.getAttribute("data-id");
-      const input = card.querySelector(".comment-input");
-      const ref = doc(db, "posts", id);
-      const text = input.value.trim();
-      const email = auth.currentUser?.email || "Anonim";
-      if (!text) return;
+// 💬 KIRIM KOMENTAR KE FIRESTORE
+document.querySelectorAll(".send-comment").forEach((btn) => {
+  btn.addEventListener("click", async (e) => {
+    const card = e.target.closest(".post-card");
+    const id = card.getAttribute("data-id");
+    const input = card.querySelector(".comment-input");
+    const ref = doc(db, "posts", id);
+    const text = input.value.trim();
+    const email = auth.currentUser?.email || "Anonim";
+    if (!text) return;
 
-      const newComment = {
-  user: email,
-  text: text,
-  createdAt: new Date().toISOString() // simpan waktu biasa, bukan serverTimestamp
-};
+    const newComment = {
+      user: email,
+      text: text,
+      createdAt: new Date().toISOString() // waktu lokal
+    };
 
-await updateDoc(ref, {
-  comments: arrayUnion(newComment),
-  lastCommentAt: serverTimestamp() // ini boleh, di luar array
-});
+    try {
+      // 1️⃣ Tambah komentar ke array tanpa serverTimestamp
+      await updateDoc(ref, {
+        comments: arrayUnion(newComment)
+      });
+
+      // 2️⃣ Update waktu terakhir di luar array, di operasi terpisah
+      await updateDoc(ref, {
+        lastCommentAt: serverTimestamp()
+      });
 
       input.value = "";
-    });
+      console.log("💬 Komentar berhasil disimpan!");
+    } catch (err) {
+      console.error("❌ Gagal menyimpan komentar:", err);
+      alert("Gagal menyimpan komentar. Coba lagi nanti.");
+    }
   });
-}
+});
   
   // ==============================
   // 🔥 Ambil data Firestore realtime
