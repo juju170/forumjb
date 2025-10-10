@@ -99,3 +99,11 @@ main {
 .auth-box button:hover {
   opacity: 0.9;
 }
+
+.nav-btn.active {
+  color: #008cff;
+}
+
+.nav-btn.active img {
+  filter: brightness(0) saturate(100%) invert(32%) sepia(99%) saturate(2590%) hue-rotate(200deg) brightness(100%) contrast(97%);
+  }
