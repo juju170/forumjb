@@ -140,7 +140,7 @@ function showUserProfile(user) {
 }
 
 // ==============================
-// 🏠 HALAMAN BERANDA (REALTIME FIRESTORE)
+// 🏠 HALAMAN BERANDA
 // ==============================
 function loadHomePage() {
   const postList = document.getElementById("postList");
@@ -152,24 +152,14 @@ function loadHomePage() {
     return;
   }
 
-  // ✅ Ambil postingan dari Firestore
+  // ✅ Ambil postingan dari Firestore realtime
   const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
   onSnapshot(q, (snapshot) => {
     console.log("📦 Jumlah posting terbaca:", snapshot.size);
-
-    postList.innerHTML = ""; // bersihkan daftar sebelum render ulang
-
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-
-// ✅ Ambil postingan dari Firestore dan render versi lengkap
-  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-  onSnapshot(q, (snapshot) => {
-    console.log("📦 Jumlah posting terbaca:", snapshot.size);
-    renderPosts(snapshot);
+    renderPosts(snapshot, postList);
   });
-      
-  // 🔘 Tombol Filter (dummy dulu)
+
+  // 🔘 Tombol filter (sementara dummy)
   if (btnMengikuti && btnJelajahi) {
     btnMengikuti.addEventListener("click", () => {
       btnMengikuti.classList.add("active");
@@ -183,13 +173,17 @@ function loadHomePage() {
   }
 }
 
-  // ==============================
-  // 🧠 Fungsi render posting
-  // ==============================
-  
-function renderPosts(snapshot) {
+// ==============================
+// 🧩 RENDER POSTINGAN
+// ==============================
+function renderPosts(snapshot, postList) {
+  if (!postList) return;
+
   if (snapshot.empty) {
-    postList.innerHTML = "<p style='text-align:center;color:#777;'>Belum ada postingan 😢</p>";
+    postList.innerHTML = `
+      <p style="text-align:center;color:#777;margin-top:40px;">
+        Belum ada postingan 😢
+      </p>`;
     return;
   }
 
@@ -197,10 +191,10 @@ function renderPosts(snapshot) {
 
   snapshot.forEach((docSnap) => {
     const data = docSnap.data();
+    const postId = docSnap.id;
     const user = data.user || "Anonim";
     const text = data.text || "";
     const image = data.image || "";
-    const postId = docSnap.id;
     const likes = data.likes || [];
     const comments = data.comments || [];
     const isLiked = likes.includes(auth.currentUser?.email);
@@ -208,28 +202,30 @@ function renderPosts(snapshot) {
       ? new Date(data.createdAt.seconds * 1000).toLocaleString()
       : "Baru saja";
 
+    // ✅ Struktur HTML posting
     const postHTML = `
       <div class="post-card" data-id="${postId}">
         <div class="post-header">
-          <img src="../assets/icons/profile.png" class="post-avatar" alt="avatar">
-          <span class="post-author">${user}</span>
+          <img src="${data.userPhoto || 'assets/icons/profile.png'}" class="post-avatar" alt="User">
+          <div class="post-author">${user}</div>
         </div>
         <p class="post-text">${text}</p>
-        ${image ? `<img src="${image}" class="post-image" alt="gambar posting">` : ""}
+        ${
+          image
+            ? `<img src="${image}" alt="gambar" class="post-img" loading="lazy" />`
+            : ""
+        }
         <div class="post-footer">
           <button class="like-btn ${isLiked ? "liked" : ""}">❤️ ${likes.length}</button>
           <button class="comment-btn">💬 ${comments.length}</button>
           <small style="float:right;color:#888;">📅 ${time}</small>
         </div>
         <div class="comment-box hidden">
-          <input type="text" class="comment-input" placeholder="Tulis komentar...">
+          <input type="text" class="comment-input" placeholder="Tulis komentar..." />
           <button class="send-comment">Kirim</button>
           <div class="comment-list">
             ${comments
-              .map(
-                (c) =>
-                  `<p><b>${c.user}</b>: ${c.text}</p>`
-              )
+              .map((c) => `<p><b>${c.user}</b>: ${c.text}</p>`)
               .join("")}
           </div>
         </div>
@@ -239,68 +235,68 @@ function renderPosts(snapshot) {
     postList.insertAdjacentHTML("beforeend", postHTML);
   });
 
-  // ❤️ LIKE POST
-  document.querySelectorAll(".like-btn").forEach((btn) => {
-    btn.addEventListener("click", async (e) => {
-      const card = e.target.closest(".post-card");
-      const id = card.getAttribute("data-id");
-      const ref = doc(db, "posts", id);
-      const email = auth.currentUser?.email;
+  // ==============================
+  // ❤️ LIKE DAN 💬 KOMENTAR EVENT
+  // ==============================
+  const likeBtns = document.querySelectorAll(".like-btn");
+  const commentBtns = document.querySelectorAll(".comment-btn");
+  const sendBtns = document.querySelectorAll(".send-comment");
 
-      if (!email) return alert("Harap login dulu!");
+  likeBtns.forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const postCard = btn.closest(".post-card");
+      const postId = postCard.dataset.id;
+      const postRef = doc(db, "posts", postId);
+      const userEmail = auth.currentUser?.email;
 
-      const liked = e.target.classList.contains("liked");
-      await updateDoc(ref, {
-        likes: liked ? arrayRemove(email) : arrayUnion(email)
-      });
+      if (!userEmail) return alert("Login dulu untuk menyukai postingan!");
+
+      const isLiked = btn.classList.contains("liked");
+
+      try {
+        await updateDoc(postRef, {
+          likes: isLiked
+            ? arrayRemove(userEmail)
+            : arrayUnion(userEmail),
+        });
+      } catch (err) {
+        console.error("❌ Gagal update like:", err);
+      }
     });
   });
 
-  // 💬 TAMPILKAN / SEMBUNYIKAN KOLOM KOMENTAR
-  document.querySelectorAll(".comment-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      const card = e.target.closest(".post-card");
-      const box = card.querySelector(".comment-box");
+  commentBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const box = btn.closest(".post-card").querySelector(".comment-box");
       box.classList.toggle("hidden");
     });
   });
 
-// 💬 KIRIM KOMENTAR KE FIRESTORE
-document.querySelectorAll(".send-comment").forEach((btn) => {
-  btn.addEventListener("click", async (e) => {
-    const card = e.target.closest(".post-card");
-    const id = card.getAttribute("data-id");
-    const input = card.querySelector(".comment-input");
-    const ref = doc(db, "posts", id);
-    const text = input.value.trim();
-    const email = auth.currentUser?.email || "Anonim";
-    if (!text) return;
+  sendBtns.forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const postCard = btn.closest(".post-card");
+      const postId = postCard.dataset.id;
+      const input = postCard.querySelector(".comment-input");
+      const text = input.value.trim();
+      if (!text) return;
 
-    const newComment = {
-      user: email,
-      text: text,
-      createdAt: new Date().toISOString() // waktu lokal
-    };
+      const comment = {
+        user: auth.currentUser?.email || "Anonim",
+        text,
+        time: serverTimestamp(),
+      };
 
-    try {
-      // 1️⃣ Tambah komentar ke array tanpa serverTimestamp
-      await updateDoc(ref, {
-        comments: arrayUnion(newComment)
-      });
-
-      // 2️⃣ Update waktu terakhir di luar array, di operasi terpisah
-      await updateDoc(ref, {
-        lastCommentAt: serverTimestamp()
-      });
-
-      input.value = "";
-      console.log("💬 Komentar berhasil disimpan!");
-    } catch (err) {
-      console.error("❌ Gagal menyimpan komentar:", err);
-      alert("Gagal menyimpan komentar. Coba lagi nanti.");
-    }
+      try {
+        await updateDoc(doc(db, "posts", postId), {
+          comments: arrayUnion(comment),
+        });
+        input.value = "";
+      } catch (err) {
+        console.error("❌ Gagal kirim komentar:", err);
+      }
+    });
   });
-});
+}
   
   // ==============================
   // 🔥 Ambil data Firestore realtime
