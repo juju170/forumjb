@@ -98,8 +98,14 @@ async function loadPage(page) {
     const html = await res.text();
     content.innerHTML = html;
 
-    // Biar tombol login/register hidup saat auth dimuat
+    // 🟢 Tambahan: set tombol aktif
+    buttons.forEach(b => b.classList.remove("active"));
+    const activeBtn = document.querySelector(`.nav-btn[data-page="${page}"]`);
+    if (activeBtn) activeBtn.classList.add("active");
+
+    // 🟢 Jalankan authEvents kalau halaman auth
     if (page === "auth") handleAuthEvents();
+
   } catch (e) {
     content.innerHTML = `<p style='text-align:center;color:red;'>Halaman gagal dimuat 😢</p>`;
     console.error("❌ Gagal memuat halaman:", e);
