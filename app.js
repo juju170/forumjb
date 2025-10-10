@@ -15,6 +15,14 @@ import {
   addDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  query,
+  orderBy,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // 🧩 Konfigurasi Firebase kamu (ganti dengan punyamu)
 const firebaseConfig = {
@@ -139,17 +147,50 @@ function loadHomePage() {
   const btnMengikuti = document.getElementById("btnMengikuti");
   const btnJelajahi = document.getElementById("btnJelajahi");
 
-  if (!postList || !btnMengikuti || !btnJelajahi) return;
+  if (!postList) return;
 
-  const postinganMengikuti = [
-    { nama: "Budi RT 2", isi: "Panen cabai hari ini 🌶️", gambar: "https://placekitten.com/400/250" },
-    { nama: "Siti RW 1", isi: "Ada pengajian rutin malam ini 🕌", gambar: "https://placebear.com/400/250" }
-  ];
+  import {
+    collection,
+    query,
+    orderBy,
+    onSnapshot
+  } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-  const postinganJelajahi = [
-    { nama: "Andi RT 3", isi: "Jual bibit singkong unggul 🍃", gambar: "https://placekitten.com/401/250" },
-    { nama: "Rina RW 5", isi: "Lomba kebersihan antar RT 💪", gambar: "https://placebear.com/401/250" }
-  ];
+  // 🔥 Ambil data posting dari Firestore realtime
+  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+  onSnapshot(q, (snapshot) => {
+    postList.innerHTML = "";
+
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      const html = `
+        <div class="post-card">
+          <div class="post-header">
+            <img src="../assets/icons/profile.png" class="post-avatar">
+            <span class="post-author">${data.user || "Anonim"}</span>
+          </div>
+          <p>${data.text || ""}</p>
+          ${data.image ? `<img src="${data.image}" class="post-image">` : ""}
+          <small style="color:#888;">📅 ${data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleString() : "Baru saja"}</small>
+        </div>
+      `;
+      postList.insertAdjacentHTML("beforeend", html);
+    });
+  });
+
+  // Tombol filter (dummy)
+  if (btnMengikuti && btnJelajahi) {
+    btnMengikuti.addEventListener("click", () => {
+      btnMengikuti.classList.add("active");
+      btnJelajahi.classList.remove("active");
+    });
+
+    btnJelajahi.addEventListener("click", () => {
+      btnJelajahi.classList.add("active");
+      btnMengikuti.classList.remove("active");
+    });
+  }
+}
 
   function renderPosts(list) {
     postList.innerHTML = list.map(p => `
