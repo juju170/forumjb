@@ -130,7 +130,9 @@ function showUserProfile(user) {
     logoutBtn.addEventListener("click", async () => {
       try {
         await signOut(auth);
-        alert("Anda telah keluar.");
+        // Peringatan diganti karena window.alert tidak disarankan di lingkungan ini
+        // alert("Anda telah keluar."); 
+        console.log("Anda telah keluar.");
         window.location.href = "pages/auth.html";
       } catch (e) {
         console.error("❌ Gagal logout:", e);
@@ -151,23 +153,6 @@ function loadHomePage() {
     console.error("❌ Elemen #postList tidak ditemukan di halaman home.html");
     return;
   }
-
-  // ✅ Ambil postingan dari Firestore
-  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-  onSnapshot(q, (snapshot) => {
-    console.log("📦 Jumlah posting terbaca:", snapshot.size);
-
-    postList.innerHTML = ""; // bersihkan daftar sebelum render ulang
-
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-
-// ✅ Ambil postingan dari Firestore dan render versi lengkap
-  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-  onSnapshot(q, (snapshot) => {
-    console.log("📦 Jumlah posting terbaca:", snapshot.size);
-    renderPosts(snapshot);
-  });
       
   // 🔘 Tombol Filter (dummy dulu)
   if (btnMengikuti && btnJelajahi) {
@@ -181,152 +166,141 @@ function loadHomePage() {
       btnMengikuti.classList.remove("active");
     });
   }
-}
 
   // ==============================
   // 🧠 Fungsi render posting
   // ==============================
   
-function renderPosts(snapshot) {
-  if (snapshot.empty) {
-    postList.innerHTML = "<p style='text-align:center;color:#777;'>Belum ada postingan 😢</p>";
-    return;
-  }
+  function renderPosts(snapshot) {
+    if (snapshot.empty) {
+      postList.innerHTML = "<p style='text-align:center;color:#777;'>Belum ada postingan 😢</p>";
+      return;
+    }
 
-  postList.innerHTML = "";
+    postList.innerHTML = "";
 
-  snapshot.forEach((docSnap) => {
-    const data = docSnap.data();
-    const user = data.user || "Anonim";
-    const text = data.text || "";
-    const image = data.image || "";
-    const postId = docSnap.id;
-    const likes = data.likes || [];
-    const comments = data.comments || [];
-    const isLiked = likes.includes(auth.currentUser?.email);
-    const time = data.createdAt
-      ? new Date(data.createdAt.seconds * 1000).toLocaleString()
-      : "Baru saja";
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const user = data.user || "Anonim";
+      const text = data.text || "";
+      const image = data.image || "";
+      const postId = docSnap.id;
+      const likes = data.likes || [];
+      const comments = data.comments || [];
+      const isLiked = likes.includes(auth.currentUser?.email);
+      const time = data.createdAt
+        ? new Date(data.createdAt.seconds * 1000).toLocaleString()
+        : "Baru saja";
 
-    const postHTML = `
-      <div class="post-card" data-id="${postId}">
-        <div class="post-header">
-          <img src="../assets/icons/profile.png" class="post-avatar" alt="avatar">
-          <span class="post-author">${user}</span>
-        </div>
-        <p class="post-text">${text}</p>
-        ${image ? `<img src="${image}" class="post-image" alt="gambar posting">` : ""}
-        <div class="post-footer">
-          <button class="like-btn ${isLiked ? "liked" : ""}">❤️ ${likes.length}</button>
-          <button class="comment-btn">💬 ${comments.length}</button>
-          <small style="float:right;color:#888;">📅 ${time}</small>
-        </div>
-        <div class="comment-box hidden">
-          <input type="text" class="comment-input" placeholder="Tulis komentar...">
-          <button class="send-comment">Kirim</button>
-          <div class="comment-list">
-            ${comments
-              .map(
-                (c) =>
-                  `<p><b>${c.user}</b>: ${c.text}</p>`
-              )
-              .join("")}
+      const postHTML = `
+        <div class="post-card" data-id="${postId}">
+          <div class="post-header">
+            <img src="../assets/icons/profile.png" class="post-avatar" alt="avatar">
+            <span class="post-author">${user}</span>
+          </div>
+          <p class="post-text">${text}</p>
+          ${image ? `<img src="${image}" class="post-image" alt="gambar posting">` : ""}
+          <div class="post-footer">
+            <button class="like-btn ${isLiked ? "liked" : ""}">❤️ ${likes.length}</button>
+            <button class="comment-btn">💬 ${comments.length}</button>
+            <small style="float:right;color:#888;">📅 ${time}</small>
+          </div>
+          <div class="comment-box hidden">
+            <input type="text" class="comment-input" placeholder="Tulis komentar...">
+            <button class="send-comment">Kirim</button>
+            <div class="comment-list">
+              ${comments
+                .map(
+                  (c) =>
+                    `<p><b>${c.user}</b>: ${c.text}</p>`
+                )
+                .join("")}
+            </div>
           </div>
         </div>
-      </div>
-    `;
+      `;
 
-    postList.insertAdjacentHTML("beforeend", postHTML);
-  });
+      postList.insertAdjacentHTML("beforeend", postHTML);
+    });
 
-  // ❤️ LIKE POST
-  document.querySelectorAll(".like-btn").forEach((btn) => {
+    // ❤️ LIKE POST
+    document.querySelectorAll(".like-btn").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        const card = e.target.closest(".post-card");
+        const id = card.getAttribute("data-id");
+        const ref = doc(db, "posts", id);
+        const email = auth.currentUser?.email;
+
+        // Ganti alert dengan console.log/custom modal
+        if (!email) return console.log("Harap login dulu untuk menyukai!");
+
+        const liked = e.target.classList.contains("liked");
+        await updateDoc(ref, {
+          likes: liked ? arrayRemove(email) : arrayUnion(email)
+        });
+      });
+    });
+
+    // 💬 TAMPILKAN / SEMBUNYIKAN KOLOM KOMENTAR
+    document.querySelectorAll(".comment-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const card = e.target.closest(".post-card");
+        const box = card.querySelector(".comment-box");
+        box.classList.toggle("hidden");
+      });
+    });
+
+  // 💬 KIRIM KOMENTAR KE FIRESTORE
+  document.querySelectorAll(".send-comment").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
       const card = e.target.closest(".post-card");
       const id = card.getAttribute("data-id");
+      const input = card.querySelector(".comment-input");
       const ref = doc(db, "posts", id);
-      const email = auth.currentUser?.email;
+      const text = input.value.trim();
+      const email = auth.currentUser?.email || "Anonim";
+      if (!text) return;
 
-      if (!email) return alert("Harap login dulu!");
+      const newComment = {
+        user: email,
+        text: text,
+        createdAt: new Date().toISOString() // waktu lokal
+      };
 
-      const liked = e.target.classList.contains("liked");
-      await updateDoc(ref, {
-        likes: liked ? arrayRemove(email) : arrayUnion(email)
-      });
+      try {
+        // 1️⃣ Tambah komentar ke array tanpa serverTimestamp
+        await updateDoc(ref, {
+          comments: arrayUnion(newComment)
+        });
+
+        // 2️⃣ Update waktu terakhir di luar array, di operasi terpisah
+        await updateDoc(ref, {
+          lastCommentAt: serverTimestamp()
+        });
+
+        input.value = "";
+        console.log("💬 Komentar berhasil disimpan!");
+      } catch (err) {
+        console.error("❌ Gagal menyimpan komentar:", err);
+        // Ganti alert dengan console.log/custom modal
+        console.log("Gagal menyimpan komentar. Coba lagi nanti.");
+      }
     });
   });
+  } // ⬅️ Tutup fungsi renderPosts
 
-  // 💬 TAMPILKAN / SEMBUNYIKAN KOLOM KOMENTAR
-  document.querySelectorAll(".comment-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      const card = e.target.closest(".post-card");
-      const box = card.querySelector(".comment-box");
-      box.classList.toggle("hidden");
-    });
-  });
-
-// 💬 KIRIM KOMENTAR KE FIRESTORE
-document.querySelectorAll(".send-comment").forEach((btn) => {
-  btn.addEventListener("click", async (e) => {
-    const card = e.target.closest(".post-card");
-    const id = card.getAttribute("data-id");
-    const input = card.querySelector(".comment-input");
-    const ref = doc(db, "posts", id);
-    const text = input.value.trim();
-    const email = auth.currentUser?.email || "Anonim";
-    if (!text) return;
-
-    const newComment = {
-      user: email,
-      text: text,
-      createdAt: new Date().toISOString() // waktu lokal
-    };
-
-    try {
-      // 1️⃣ Tambah komentar ke array tanpa serverTimestamp
-      await updateDoc(ref, {
-        comments: arrayUnion(newComment)
-      });
-
-      // 2️⃣ Update waktu terakhir di luar array, di operasi terpisah
-      await updateDoc(ref, {
-        lastCommentAt: serverTimestamp()
-      });
-
-      input.value = "";
-      console.log("💬 Komentar berhasil disimpan!");
-    } catch (err) {
-      console.error("❌ Gagal menyimpan komentar:", err);
-      alert("Gagal menyimpan komentar. Coba lagi nanti.");
-    }
-  });
-});
-  
   // ==============================
   // 🔥 Ambil data Firestore realtime
   // ==============================
 
-  const q = query(collection(db, "posts"));
+  const q = query(collection(db, "posts"), orderBy("createdAt", "desc")); // Tambahkan orderBy di sini
   onSnapshot(q, (snapshot) => {
     console.log("📦 Jumlah posting terbaca:", snapshot.size);
     renderPosts(snapshot);
-  }); // ✅ cukup satu penutup di sini
+  });
+} // ⬅️ Ini adalah penutup yang benar untuk fungsi loadHomePage()
 
-// ==============================
-  // 🔘 Tombol Filter (sementara dummy)
-  // ==============================
-  if (btnMengikuti && btnJelajahi) {
-    btnMengikuti.addEventListener("click", () => {
-      btnMengikuti.classList.add("active");
-      btnJelajahi.classList.remove("active");
-    });
 
-    btnJelajahi.addEventListener("click", () => {
-      btnJelajahi.classList.add("active");
-      btnMengikuti.classList.remove("active");
-    });
-  }
-} // ⬅️ Tambahkan ini untuk menutup fungsi loadHomePage()
 // ==============================
 // ➕ HALAMAN POST (UPLOAD & FIRESTORE)
 // ==============================
