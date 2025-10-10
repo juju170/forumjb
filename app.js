@@ -242,13 +242,16 @@ function renderPosts(snapshot) {
       const email = auth.currentUser?.email || "Anonim";
       if (!text) return;
 
-      await updateDoc(ref, {
-        comments: arrayUnion({
-          user: email,
-          text: text,
-          createdAt: serverTimestamp()
-        })
-      });
+      const newComment = {
+  user: email,
+  text: text,
+  createdAt: new Date().toISOString() // simpan waktu biasa, bukan serverTimestamp
+};
+
+await updateDoc(ref, {
+  comments: arrayUnion(newComment),
+  lastCommentAt: serverTimestamp() // ini boleh, di luar array
+});
 
       input.value = "";
     });
