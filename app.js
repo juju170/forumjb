@@ -165,6 +165,75 @@ function loadHomePage() {
     }
   ];
 
+// ==============================
+// ➕ HALAMAN POST (UPLOAD GAMBAR)
+// ==============================
+function loadPostPage() {
+  const postText = document.getElementById("postText");
+  const postImage = document.getElementById("postImage");
+  const uploadBtn = document.getElementById("uploadBtn");
+  const uploadMsg = document.getElementById("uploadMsg");
+  const previewBox = document.getElementById("previewBox");
+
+  if (!postText || !postImage || !uploadBtn) return;
+
+  // Preview gambar sebelum upload
+  postImage.addEventListener("change", () => {
+    const file = postImage.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      previewBox.innerHTML = `<img src="${e.target.result}" alt="preview">`;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Upload gambar ke Cloudinary
+  uploadBtn.addEventListener("click", async () => {
+    const text = postText.value.trim();
+    const file = postImage.files[0];
+
+    if (!text && !file) {
+      uploadMsg.textContent = "❗ Harap isi teks atau gambar dulu.";
+      return;
+    }
+
+    uploadMsg.textContent = "⏳ Mengupload...";
+
+    try {
+      let imageUrl = "";
+      if (file) {
+        const data = new FormData();
+        data.append("file", file);
+        data.append("upload_preset", "ISI_UPLOAD_PRESET_KAMU"); // ganti dengan preset Cloudinary kamu
+        data.append("cloud_name", "ISI_NAMA_AKUN_CLOUDINARY_KAMU");
+
+        const res = await fetch("https://api.cloudinary.com/v1_1/ISI_NAMA_AKUN_CLOUDINARY_KAMU/image/upload", {
+          method: "POST",
+          body: data
+        });
+
+        const json = await res.json();
+        imageUrl = json.secure_url;
+      }
+
+      console.log("📸 Upload berhasil:", imageUrl);
+      uploadMsg.textContent = "✅ Postingan berhasil diupload (dummy)!";
+
+      // Nanti bagian ini diganti dengan simpan ke Firestore
+      setTimeout(() => {
+        postText.value = "";
+        postImage.value = "";
+        previewBox.innerHTML = "";
+      }, 2000);
+
+    } catch (e) {
+      console.error("❌ Gagal upload:", e);
+      uploadMsg.textContent = "❌ Gagal upload gambar.";
+    }
+  });
+}
+  
   function renderPosts(list) {
     postList.innerHTML = list.map(
       p => `
