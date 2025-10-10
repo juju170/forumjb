@@ -368,7 +368,7 @@ function loadPostPage() {
 }
 
 // ==============================
-// 🚪 CEK STATUS LOGIN USER
+// 🔥 CEK STATUS LOGIN FIREBASE
 // ==============================
 onAuthStateChanged(auth, (user) => {
   if (user) {
@@ -379,6 +379,6 @@ onAuthStateChanged(auth, (user) => {
     loadPage("auth");
   }
 });
-  });
-} // ⬅️ ini penutup fungsi loadHomePage()
+
+// ✅ Penutup semua fungsi dan tanda selesai load
 console.log("✅ app.js selesai dimuat");
