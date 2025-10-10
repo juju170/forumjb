@@ -167,8 +167,10 @@ function loadHomePage() {
   ];
 
 // ==============================
-// ➕ HALAMAN POST (UPLOAD GAMBAR)
+// ➕ HALAMAN POST (UPLOAD + FIRESTORE)
 // ==============================
+import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
 function loadPostPage() {
   const postText = document.getElementById("postText");
   const postImage = document.getElementById("postImage");
@@ -178,7 +180,7 @@ function loadPostPage() {
 
   if (!postText || !postImage || !uploadBtn) return;
 
-  // Preview gambar sebelum upload
+  // 🖼️ Preview gambar
   postImage.addEventListener("change", () => {
     const file = postImage.files[0];
     if (!file) return;
@@ -189,13 +191,14 @@ function loadPostPage() {
     reader.readAsDataURL(file);
   });
 
-  // Upload gambar ke Cloudinary
+  // 🚀 Upload ke Cloudinary + simpan ke Firestore
   uploadBtn.addEventListener("click", async () => {
     const text = postText.value.trim();
     const file = postImage.files[0];
+    const user = auth.currentUser;
 
     if (!text && !file) {
-      uploadMsg.textContent = "❗ Harap isi teks atau gambar dulu.";
+      uploadMsg.textContent = "❗ Harap isi teks atau upload gambar dulu.";
       return;
     }
 
@@ -203,34 +206,43 @@ function loadPostPage() {
 
     try {
       let imageUrl = "";
+
+      // 🖼️ Upload ke Cloudinary (kalau ada gambar)
       if (file) {
         const data = new FormData();
         data.append("file", file);
-        data.append("upload_preset", "forumjb"); // ganti dengan preset Cloudinary kamu
-        data.append("cloud_name", "dvjfrrusn");
+        data.append("upload_preset", "forumjb"); // ganti dengan upload preset kamu
+        data.append("cloud_name", "dvjfrrusn"); // ganti dengan nama akun kamu
 
         const res = await fetch("https://api.cloudinary.com/v1_1/dvjfrrusn/image/upload", {
           method: "POST",
-          body: data
+          body: data,
         });
 
         const json = await res.json();
         imageUrl = json.secure_url;
+        console.log("📸 URL Cloudinary:", imageUrl);
       }
 
-      console.log("📸 Upload berhasil:", imageUrl);
-      uploadMsg.textContent = "✅ Postingan berhasil diupload (dummy)!";
+      // 🔥 Simpan ke Firestore
+      await addDoc(collection(db, "posts"), {
+        user: user ? user.email : "Anonim",
+        text: text,
+        image: imageUrl,
+        createdAt: serverTimestamp()
+      });
 
-      // Nanti bagian ini diganti dengan simpan ke Firestore
-      setTimeout(() => {
-        postText.value = "";
-        postImage.value = "";
-        previewBox.innerHTML = "";
-      }, 2000);
+      uploadMsg.textContent = "✅ Postingan berhasil disimpan!";
+      console.log("📦 Postingan tersimpan ke Firestore.");
+
+      // Reset form
+      postText.value = "";
+      postImage.value = "";
+      previewBox.innerHTML = "";
 
     } catch (e) {
-      console.error("❌ Gagal upload:", e);
-      uploadMsg.textContent = "❌ Gagal upload gambar.";
+      console.error("❌ Gagal upload/post:", e);
+      uploadMsg.textContent = "❌ Gagal upload atau simpan posting.";
     }
   });
 }
