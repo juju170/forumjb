@@ -17,7 +17,11 @@ import {
   serverTimestamp,
   query,
   orderBy,
-  onSnapshot
+  onSnapshot,
+  doc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // 🧩 Konfigurasi Firebase kamu (ganti dengan punyamu)
@@ -148,41 +152,103 @@ function loadHomePage() {
   // ==============================
   // 🧠 Fungsi render posting
   // ==============================
+
   function renderPosts(snapshot) {
-    if (snapshot.empty) {
-      postList.innerHTML = "<p style='text-align:center;color:#777;'>Belum ada postingan 😢</p>";
-      return;
-    }
+  if (snapshot.empty) {
+    postList.innerHTML = "<p style='text-align:center;color:#777;'>Belum ada postingan 😢</p>";
+    return;
+  }
 
-    // Bersihkan list lama
-    postList.innerHTML = "";
+  postList.innerHTML = "";
 
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      const user = data.user || "Anonim";
-      const text = data.text || "";
-      const image = data.image || "";
-      const time = data.createdAt
-        ? new Date(data.createdAt.seconds * 1000).toLocaleString()
-        : "Baru saja";
+  snapshot.forEach((docSnap) => {
+    const data = docSnap.data();
+    const user = data.user || "Anonim";
+    const text = data.text || "";
+    const image = data.image || "";
+    const postId = docSnap.id;
+    const likes = data.likes || [];
+    const comments = data.comments || [];
+    const isLiked = likes.includes(auth.currentUser?.email);
+    const time = data.createdAt
+      ? new Date(data.createdAt.seconds * 1000).toLocaleString()
+      : "Baru saja";
 
-      // Buat tampilan kartu posting
-      const postHTML = `
-        <div class="post-card">
-          <div class="post-header">
-            <img src="../assets/icons/profile.png" class="post-avatar" alt="avatar">
-            <span class="post-author">${user}</span>
-          </div>
-          <p class="post-text">${text}</p>
-          ${image ? `<img src="${image}" class="post-image" alt="gambar posting">` : ""}
-          <div class="post-footer">
-            <small style="color:#888;">📅 ${time}</small>
+    const postHTML = `
+      <div class="post-card" data-id="${postId}">
+        <div class="post-header">
+          <img src="../assets/icons/profile.png" class="post-avatar" alt="avatar">
+          <span class="post-author">${user}</span>
+        </div>
+        <p class="post-text">${text}</p>
+        ${image ? `<img src="${image}" class="post-image" alt="gambar posting">` : ""}
+        <div class="post-footer">
+          <button class="like-btn ${isLiked ? "liked" : ""}">❤️ ${likes.length}</button>
+          <button class="comment-btn">💬 ${comments.length}</button>
+          <small style="float:right;color:#888;">📅 ${time}</small>
+        </div>
+        <div class="comment-box hidden">
+          <input type="text" class="comment-input" placeholder="Tulis komentar...">
+          <button class="send-comment">Kirim</button>
+          <div class="comment-list">
+            ${comments
+              .map(
+                (c) => `<p><b>${c.user}</b>: ${c.text}</p>`
+              )
+              .join("")}
           </div>
         </div>
-      `;
-      postList.insertAdjacentHTML("beforeend", postHTML);
+      </div>
+    `;
+
+    postList.insertAdjacentHTML("beforeend", postHTML);
+  });
+
+  // Tambah interaksi setelah render
+  document.querySelectorAll(".like-btn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      const card = e.target.closest(".post-card");
+      const id = card.getAttribute("data-id");
+      const ref = doc(db, "posts", id);
+      const email = auth.currentUser?.email;
+
+      if (!email) return alert("Harap login dulu!");
+
+      const liked = e.target.classList.contains("liked");
+      await updateDoc(ref, {
+        likes: liked
+          ? arrayRemove(email)
+          : arrayUnion(email)
+      });
     });
-  }
+  });
+
+  document.querySelectorAll(".comment-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const card = e.target.closest(".post-card");
+      const box = card.querySelector(".comment-box");
+      box.classList.toggle("hidden");
+    });
+  });
+
+  document.querySelectorAll(".send-comment").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      const card = e.target.closest(".post-card");
+      const id = card.getAttribute("data-id");
+      const input = card.querySelector(".comment-input");
+      const ref = doc(db, "posts", id);
+      const text = input.value.trim();
+      const email = auth.currentUser?.email || "Anonim";
+      if (!text) return;
+
+      await updateDoc(ref, {
+        comments: arrayUnion({ user: email, text, createdAt: serverTimestamp() })
+      });
+
+      input.value = "";
+    });
+  });
+}
 
   // ==============================
   // 🔥 Ambil data Firestore realtime
