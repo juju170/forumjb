@@ -22,6 +22,17 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    console.log("👤 User login:", user.email);
+    // Kamu bisa simpan data user untuk profil nanti
+  } else {
+    console.log("🚪 Belum login");
+  }
+});
+
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -99,3 +110,13 @@ async function loadPage(page) {
 buttons.forEach(btn => {
   btn.addEventListener("click", () => loadPage(btn.dataset.page));
 });
+
+async function logoutUser() {
+  try {
+    await signOut(auth);
+    alert("Anda telah keluar.");
+    window.location.href = "pages/auth.html";
+  } catch (e) {
+    console.error("❌ Gagal logout:", e);
+  }
+}
