@@ -152,8 +152,8 @@ function loadHomePage() {
   // ==============================
   // 🧠 Fungsi render posting
   // ==============================
-
-  function renderPosts(snapshot) {
+  
+function renderPosts(snapshot) {
   if (snapshot.empty) {
     postList.innerHTML = "<p style='text-align:center;color:#777;'>Belum ada postingan 😢</p>";
     return;
@@ -193,7 +193,8 @@ function loadHomePage() {
           <div class="comment-list">
             ${comments
               .map(
-                (c) => `<p><b>${c.user}</b>: ${c.text}</p>`
+                (c) =>
+                  `<p><b>${c.user}</b>: ${c.text}</p>`
               )
               .join("")}
           </div>
@@ -204,7 +205,7 @@ function loadHomePage() {
     postList.insertAdjacentHTML("beforeend", postHTML);
   });
 
-  // Tambah interaksi setelah render
+  // ❤️ LIKE POST
   document.querySelectorAll(".like-btn").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
       const card = e.target.closest(".post-card");
@@ -216,13 +217,12 @@ function loadHomePage() {
 
       const liked = e.target.classList.contains("liked");
       await updateDoc(ref, {
-        likes: liked
-          ? arrayRemove(email)
-          : arrayUnion(email)
+        likes: liked ? arrayRemove(email) : arrayUnion(email)
       });
     });
   });
 
+  // 💬 TAMPILKAN / SEMBUNYIKAN KOLOM KOMENTAR
   document.querySelectorAll(".comment-btn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       const card = e.target.closest(".post-card");
@@ -231,6 +231,7 @@ function loadHomePage() {
     });
   });
 
+  // 💬 KIRIM KOMENTAR KE FIRESTORE
   document.querySelectorAll(".send-comment").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
       const card = e.target.closest(".post-card");
@@ -242,14 +243,18 @@ function loadHomePage() {
       if (!text) return;
 
       await updateDoc(ref, {
-        comments: arrayUnion({ user: email, text, createdAt: serverTimestamp() })
+        comments: arrayUnion({
+          user: email,
+          text: text,
+          createdAt: serverTimestamp()
+        })
       });
 
       input.value = "";
     });
   });
 }
-
+  
   // ==============================
   // 🔥 Ambil data Firestore realtime
   // ==============================
