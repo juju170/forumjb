@@ -210,7 +210,7 @@ function renderPosts(snapshot) {
     const postId = docSnap.id;
     const likes = data.likes || [];
     const comments = data.comments || [];
-    const isLiked = likes.includes(auth.currentUser?.email);
+    const isLiked = likes.includes(auth.currentUser?email);
     const time = data.createdAt
       ? new Date(data.createdAt.seconds * 1000).toLocaleString()
       : "Baru saja";
