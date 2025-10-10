@@ -33,6 +33,7 @@ import {
 // ==========================
 
 async function handleAuthEvents() {
+  console.log("🔄 handleAuthEvents dijalankan");
   const loginBtn = document.getElementById("loginBtn");
   const registerBtn = document.getElementById("registerBtn");
   const emailInput = document.getElementById("email");
