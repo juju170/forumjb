@@ -37,15 +37,17 @@
   console.log("✅ Firebase aktif di auth.html");
 
   loginBtn.addEventListener("click", async () => {
-    try {
-      await signInWithEmailAndPassword(auth, email.value, password.value);
-      msg.textContent = "✅ Login berhasil!";
-    } catch (e) {
-      console.error("❌ Gagal login:", e);
-      msg.textContent = "❌ Gagal login: " + e.code;
-    }
-  });
-
+  try {
+    await signInWithEmailAndPassword(auth, email.value, password.value);
+    msg.textContent = "✅ Login berhasil!";
+    setTimeout(() => {
+      window.location.href = "../index.html"; // arahkan ke halaman utama
+    }, 1000);
+  } catch (e) {
+    console.error("❌ Gagal login:", e);
+    msg.textContent = "❌ Gagal login: " + e.code;
+  }
+});
   registerBtn.addEventListener("click", async () => {
     try {
       await signInWithEmailAndPassword(auth, email.value, password.value);
