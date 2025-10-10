@@ -24,14 +24,14 @@ import {
   arrayRemove
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// 🧩 Konfigurasi Firebase kamu (ganti dengan punyamu)
+// 🧩 Konfigurasi Firebase kamu
 const firebaseConfig = {
   apiKey: "AIzaSyC8uiIvWOZPcSZOzCGnlRMA7WJ7TIQfy5s",
-    authDomain: "tts-indonesia-bf14e.firebaseapp.com",
-    projectId: "tts-indonesia-bf14e",
-    storageBucket: "tts-indonesia-bf14e.firebasestorage.app",
-    messagingSenderId: "240052198349",
-    appId: "1:240052198349:web:112553f8ca408b2fcc4284",    
+  authDomain: "tts-indonesia-bf14e.firebaseapp.com",
+  projectId: "tts-indonesia-bf14e",
+  storageBucket: "tts-indonesia-bf14e.firebasestorage.app",
+  messagingSenderId: "240052198349",
+  appId: "1:240052198349:web:112553f8ca408b2fcc4284",
 };
 
 // 🔥 Inisialisasi
@@ -180,10 +180,7 @@ function renderPosts(snapshot, postList) {
   if (!postList) return;
 
   if (snapshot.empty) {
-    postList.innerHTML = `
-      <p style="text-align:center;color:#777;margin-top:40px;">
-        Belum ada postingan 😢
-      </p>`;
+    postList.innerHTML = `<p style="text-align:center;color:#777;margin-top:40px;">Belum ada postingan 😢</p>`;
     return;
   }
 
@@ -202,7 +199,6 @@ function renderPosts(snapshot, postList) {
       ? new Date(data.createdAt.seconds * 1000).toLocaleString()
       : "Baru saja";
 
-    // ✅ Struktur HTML posting
     const postHTML = `
       <div class="post-card" data-id="${postId}">
         <div class="post-header">
@@ -210,11 +206,7 @@ function renderPosts(snapshot, postList) {
           <div class="post-author">${user}</div>
         </div>
         <p class="post-text">${text}</p>
-        ${
-          image
-            ? `<img src="${image}" alt="gambar" class="post-img" loading="lazy" />`
-            : ""
-        }
+        ${image ? `<img src="${image}" alt="gambar" class="post-img" loading="lazy" />` : ""}
         <div class="post-footer">
           <button class="like-btn ${isLiked ? "liked" : ""}">❤️ ${likes.length}</button>
           <button class="comment-btn">💬 ${comments.length}</button>
@@ -224,20 +216,14 @@ function renderPosts(snapshot, postList) {
           <input type="text" class="comment-input" placeholder="Tulis komentar..." />
           <button class="send-comment">Kirim</button>
           <div class="comment-list">
-            ${comments
-              .map((c) => `<p><b>${c.user}</b>: ${c.text}</p>`)
-              .join("")}
+            ${comments.map(c => `<p><b>${c.user}</b>: ${c.text}</p>`).join("")}
           </div>
         </div>
       </div>
     `;
-
     postList.insertAdjacentHTML("beforeend", postHTML);
   });
 
-  // ==============================
-  // ❤️ LIKE DAN 💬 KOMENTAR EVENT
-  // ==============================
   const likeBtns = document.querySelectorAll(".like-btn");
   const commentBtns = document.querySelectorAll(".comment-btn");
   const sendBtns = document.querySelectorAll(".send-comment");
@@ -248,16 +234,12 @@ function renderPosts(snapshot, postList) {
       const postId = postCard.dataset.id;
       const postRef = doc(db, "posts", postId);
       const userEmail = auth.currentUser?.email;
-
       if (!userEmail) return alert("Login dulu untuk menyukai postingan!");
 
       const isLiked = btn.classList.contains("liked");
-
       try {
         await updateDoc(postRef, {
-          likes: isLiked
-            ? arrayRemove(userEmail)
-            : arrayUnion(userEmail),
+          likes: isLiked ? arrayRemove(userEmail) : arrayUnion(userEmail),
         });
       } catch (err) {
         console.error("❌ Gagal update like:", err);
@@ -297,34 +279,9 @@ function renderPosts(snapshot, postList) {
     });
   });
 }
-  
-  // ==============================
-  // 🔥 Ambil data Firestore realtime
-  // ==============================
-
-  const q = query(collection(db, "posts"));
-  onSnapshot(q, (snapshot) => {
-    console.log("📦 Jumlah posting terbaca:", snapshot.size);
-    renderPosts(snapshot);
-  }); // ✅ cukup satu penutup di sini
 
 // ==============================
-  // 🔘 Tombol Filter (sementara dummy)
-  // ==============================
-  if (btnMengikuti && btnJelajahi) {
-    btnMengikuti.addEventListener("click", () => {
-      btnMengikuti.classList.add("active");
-      btnJelajahi.classList.remove("active");
-    });
-
-    btnJelajahi.addEventListener("click", () => {
-      btnJelajahi.classList.add("active");
-      btnMengikuti.classList.remove("active");
-    });
-  }
-} // ⬅️ Tambahkan ini untuk menutup fungsi loadHomePage()
-// ==============================
-// ➕ HALAMAN POST (UPLOAD & FIRESTORE)
+// ➕ HALAMAN POST
 // ==============================
 function loadPostPage() {
   const postText = document.getElementById("postText");
@@ -335,7 +292,6 @@ function loadPostPage() {
 
   if (!postText || !postImage || !uploadBtn) return;
 
-  // Preview gambar
   postImage.addEventListener("change", () => {
     const file = postImage.files[0];
     if (!file) return;
@@ -346,7 +302,6 @@ function loadPostPage() {
     reader.readAsDataURL(file);
   });
 
-  // Upload gambar ke Cloudinary + simpan ke Firestore
   uploadBtn.addEventListener("click", async () => {
     const text = postText.value.trim();
     const file = postImage.files[0];
@@ -379,18 +334,15 @@ function loadPostPage() {
 
       await addDoc(collection(db, "posts"), {
         user: user ? user.email : "Anonim",
-        text: text,
+        text,
         image: imageUrl,
         createdAt: serverTimestamp()
       });
 
       uploadMsg.textContent = "✅ Postingan berhasil disimpan!";
-      console.log("📦 Postingan tersimpan ke Firestore.");
-
       postText.value = "";
       postImage.value = "";
       previewBox.innerHTML = "";
-
     } catch (e) {
       console.error("❌ Gagal upload/post:", e);
       uploadMsg.textContent = "❌ Gagal upload atau simpan posting.";
@@ -411,5 +363,4 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// ✅ Penutup semua fungsi dan tanda selesai load
 console.log("✅ app.js selesai dimuat");
