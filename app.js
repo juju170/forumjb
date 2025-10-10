@@ -87,6 +87,29 @@ async function handleAuthEvents() {
 console.log("✅ Firebase terhubung!");
 
 // ==============================
+// 👤 PROFIL USER & LOGOUT
+// ==============================
+function showUserProfile(user) {
+  const emailSpan = document.getElementById("userEmail");
+  if (emailSpan) {
+    emailSpan.textContent = user.email;
+  }
+
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await signOut(auth);
+        alert("Anda telah keluar.");
+        window.location.href = "pages/auth.html";
+      } catch (e) {
+        console.error("❌ Gagal logout:", e);
+      }
+    });
+  }
+}
+
+// ==============================
 // 🧭 SISTEM NAVIGASI HALAMAN
 // ==============================
 const content = document.getElementById("content");
@@ -98,13 +121,18 @@ async function loadPage(page) {
     const html = await res.text();
     content.innerHTML = html;
 
-    // 🟢 Tambahan: set tombol aktif
+    // 🟢 Set tombol aktif
     buttons.forEach(b => b.classList.remove("active"));
     const activeBtn = document.querySelector(`.nav-btn[data-page="${page}"]`);
     if (activeBtn) activeBtn.classList.add("active");
 
-    // 🟢 Jalankan authEvents kalau halaman auth
+    // 🟢 Jalankan authEvents kalau di halaman auth
     if (page === "auth") handleAuthEvents();
+
+    // 🟢 Tampilkan data user di profil
+    if (page === "profile" && auth.currentUser) {
+      showUserProfile(auth.currentUser);
+    }
 
   } catch (e) {
     content.innerHTML = `<p style='text-align:center;color:red;'>Halaman gagal dimuat 😢</p>`;
