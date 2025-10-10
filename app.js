@@ -206,10 +206,10 @@ function loadPostPage() {
       if (file) {
         const data = new FormData();
         data.append("file", file);
-        data.append("upload_preset", "ISI_UPLOAD_PRESET_KAMU"); // ganti dengan preset Cloudinary kamu
-        data.append("cloud_name", "ISI_NAMA_AKUN_CLOUDINARY_KAMU");
+        data.append("upload_preset", "forumjb"); // ganti dengan preset Cloudinary kamu
+        data.append("cloud_name", "dvjfrrusn");
 
-        const res = await fetch("https://api.cloudinary.com/v1_1/ISI_NAMA_AKUN_CLOUDINARY_KAMU/image/upload", {
+        const res = await fetch("https://api.cloudinary.com/v1_1/dvjfrrusn/image/upload", {
           method: "POST",
           body: data
         });
