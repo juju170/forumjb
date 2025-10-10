@@ -90,6 +90,74 @@ console.log("✅ Firebase terhubung!");
 // 👤 PROFIL USER & LOGOUT
 // ==============================
 function showUserProfile(user) {
+  // ==============================
+// 🏠 HALAMAN BERANDA (DUMMY POST)
+// ==============================
+function loadHomePage() {
+  const postList = document.getElementById("postList");
+  const btnMengikuti = document.getElementById("btnMengikuti");
+  const btnJelajahi = document.getElementById("btnJelajahi");
+
+  if (!postList || !btnMengikuti || !btnJelajahi) return;
+
+  const postinganMengikuti = [
+    {
+      nama: "Budi RT 2",
+      isi: "Panen cabai hari ini! Harga miring buat warga desa 🌶️",
+      gambar: "https://placekitten.com/400/250"
+    },
+    {
+      nama: "Siti RW 1",
+      isi: "Ada pengajian rutin malam ini di mushola Nurul Huda 🕌",
+      gambar: "https://placebear.com/400/250"
+    }
+  ];
+
+  const postinganJelajahi = [
+    {
+      nama: "Andi RT 3",
+      isi: "Jual bibit singkong unggul, murah meriah 🍃",
+      gambar: "https://placekitten.com/401/250"
+    },
+    {
+      nama: "Rina RW 5",
+      isi: "Lomba kebersihan antar RT dimulai minggu depan! 💪",
+      gambar: "https://placebear.com/401/250"
+    }
+  ];
+
+  function renderPosts(list) {
+    postList.innerHTML = list
+      .map(
+        (p) => `
+      <div class="post-card">
+        <div class="post-header">
+          <img src="../assets/icons/profile.png" class="post-avatar">
+          <span class="post-author">${p.nama}</span>
+        </div>
+        <p>${p.isi}</p>
+        <img src="${p.gambar}" class="post-image">
+      </div>
+    `
+      )
+      .join("");
+  }
+
+  // Default tampil: Mengikuti
+  renderPosts(postinganMengikuti);
+
+  btnMengikuti.addEventListener("click", () => {
+    btnMengikuti.classList.add("active");
+    btnJelajahi.classList.remove("active");
+    renderPosts(postinganMengikuti);
+  });
+
+  btnJelajahi.addEventListener("click", () => {
+    btnJelajahi.classList.add("active");
+    btnMengikuti.classList.remove("active");
+    renderPosts(postinganJelajahi);
+  });
+}
   const emailSpan = document.getElementById("userEmail");
   if (emailSpan) {
     emailSpan.textContent = user.email;
@@ -133,6 +201,10 @@ async function loadPage(page) {
     // 🟢 Tampilkan data user di profil
     if (page === "profile" && auth.currentUser) {
       showUserProfile(auth.currentUser);
+    }
+
+    if (page === "home") {
+  loadHomePage();
     }
 
   } catch (e) {
