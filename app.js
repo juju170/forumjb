@@ -334,7 +334,6 @@ document.querySelectorAll(".send-comment").forEach((btn) => {
     });
   }
 } // ⬅️ Tambahkan ini untuk menutup fungsi loadHomePage()
-}
 // ==============================
 // ➕ HALAMAN POST (UPLOAD & FIRESTORE)
 // ==============================
