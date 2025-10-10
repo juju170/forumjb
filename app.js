@@ -82,9 +82,16 @@ async function loadPage(page) {
     const res = await fetch(`pages/${page}.html`);
     const html = await res.text();
     content.innerHTML = html;
-    handleAuthEvents(); // aktifkan listener login/register kalau di halaman auth
+
+    // Tambahkan ini supaya event login/register aktif
+    setTimeout(() => {
+      handleAuthEvents();
+    }, 100); 
+
+    console.log(`✅ Halaman ${page} dimuat`);
   } catch (e) {
     content.innerHTML = `<p style='text-align:center;color:red;'>Halaman gagal dimuat 😢</p>`;
+    console.error("❌ Gagal memuat halaman:", e);
   }
 }
 
