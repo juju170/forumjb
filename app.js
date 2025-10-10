@@ -145,14 +145,6 @@ function loadHomePage() {
 
   if (!postList) return;
 
-  // 🔥 Import tambahan fungsi Firestore untuk query realtime
-  import {
-    collection,
-    query,
-    orderBy,
-    onSnapshot
-  } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
   // ==============================
   // 🧠 Fungsi render posting
   // ==============================
