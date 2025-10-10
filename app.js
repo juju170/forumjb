@@ -9,10 +9,14 @@ import {
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// 🧩 Konfigurasi Firebase kamu (pastikan sudah benar)
+// 🧩 Konfigurasi Firebase kamu (ganti dengan punyamu)
 const firebaseConfig = {
   apiKey: "AIzaSyC8uiIvWOZPcSZOzCGnlRMA7WJ7TIQfy5s",
     authDomain: "tts-indonesia-bf14e.firebaseapp.com",
@@ -30,36 +34,34 @@ const auth = getAuth(app);
 console.log("✅ Firebase terhubung!");
 
 // ==============================
-// 🌐 ELEMENT NAVIGASI & PEMUAT HALAMAN
+// 🌐 SISTEM NAVIGASI HALAMAN
 // ==============================
 const content = document.getElementById("content");
 const buttons = document.querySelectorAll(".nav-btn");
 
-// Fungsi muat halaman
 async function loadPage(page) {
   try {
     const res = await fetch(`pages/${page}.html`);
     const html = await res.text();
     content.innerHTML = html;
 
-    // Set tombol aktif
+    // Navigasi aktif
     buttons.forEach(b => b.classList.remove("active"));
     const activeBtn = document.querySelector(`.nav-btn[data-page="${page}"]`);
     if (activeBtn) activeBtn.classList.add("active");
 
-    // Jalankan logika halaman tertentu
+    // Jalankan logika per halaman
     if (page === "auth") handleAuthEvents();
     if (page === "profile" && auth.currentUser) showUserProfile(auth.currentUser);
     if (page === "home") loadHomePage();
     if (page === "post") loadPostPage();
 
   } catch (e) {
-    content.innerHTML = `<p style='text-align:center;color:red;'>Halaman gagal dimuat 😢</p>`;
+    content.innerHTML = `<p style="color:red;text-align:center;">Halaman gagal dimuat 😢</p>`;
     console.error("❌ Gagal memuat halaman:", e);
   }
 }
 
-// Klik tombol navigasi
 buttons.forEach(btn => {
   btn.addEventListener("click", () => {
     const page = btn.getAttribute("data-page");
@@ -68,7 +70,7 @@ buttons.forEach(btn => {
 });
 
 // ==============================
-// 👤 HALAMAN LOGIN / REGISTER
+// 👥 LOGIN & REGISTER
 // ==============================
 function handleAuthEvents() {
   const registerBtn = document.getElementById("registerBtn");
@@ -86,8 +88,8 @@ function handleAuthEvents() {
         msg.textContent = "✅ Akun berhasil dibuat!";
         setTimeout(() => (window.location.href = "../index.html"), 1000);
       } catch (e) {
-        console.error("❌ Firebase error:", e);
         msg.textContent = "❌ Gagal daftar: " + e.code;
+        console.error(e);
       }
     });
   }
@@ -101,15 +103,15 @@ function handleAuthEvents() {
         msg.textContent = "✅ Login berhasil!";
         setTimeout(() => (window.location.href = "../index.html"), 1000);
       } catch (e) {
-        console.error("❌ Firebase error:", e);
         msg.textContent = "❌ Gagal login: " + e.code;
+        console.error(e);
       }
     });
   }
 }
 
 // ==============================
-// 👤 PROFIL USER & LOGOUT
+// 👤 PROFIL USER
 // ==============================
 function showUserProfile(user) {
   const emailSpan = document.getElementById("userEmail");
@@ -126,13 +128,11 @@ function showUserProfile(user) {
         console.error("❌ Gagal logout:", e);
       }
     });
-  } else {
-    console.warn("⚠️ Tombol logout belum ditemukan di halaman.");
   }
 }
 
 // ==============================
-// 🏠 HALAMAN BERANDA (DUMMY POST)
+// 🏠 BERANDA (POST DUMMY)
 // ==============================
 function loadHomePage() {
   const postList = document.getElementById("postList");
@@ -142,114 +142,17 @@ function loadHomePage() {
   if (!postList || !btnMengikuti || !btnJelajahi) return;
 
   const postinganMengikuti = [
-    {
-      nama: "Budi RT 2",
-      isi: "Panen cabai hari ini! Harga miring buat warga desa 🌶️",
-      gambar: "https://placekitten.com/400/250"
-    },
-    {
-      nama: "Siti RW 1",
-      isi: "Ada pengajian rutin malam ini di mushola Nurul Huda 🕌",
-      gambar: "https://placebear.com/400/250"
-    }
+    { nama: "Budi RT 2", isi: "Panen cabai hari ini 🌶️", gambar: "https://placekitten.com/400/250" },
+    { nama: "Siti RW 1", isi: "Ada pengajian rutin malam ini 🕌", gambar: "https://placebear.com/400/250" }
   ];
 
   const postinganJelajahi = [
-    {
-      nama: "Andi RT 3",
-      isi: "Jual bibit singkong unggul, murah meriah 🍃",
-      gambar: "https://placekitten.com/401/250"
-    },
-    {
-      nama: "Rina RW 5",
-      isi: "Lomba kebersihan antar RT dimulai minggu depan! 💪",
-      gambar: "https://placebear.com/401/250"
-    }
+    { nama: "Andi RT 3", isi: "Jual bibit singkong unggul 🍃", gambar: "https://placekitten.com/401/250" },
+    { nama: "Rina RW 5", isi: "Lomba kebersihan antar RT 💪", gambar: "https://placebear.com/401/250" }
   ];
 
-// ==============================
-// ➕ HALAMAN POST (UPLOAD + FIRESTORE)
-// ==============================
-
-function loadPostPage() {
-  const postText = document.getElementById("postText");
-  const postImage = document.getElementById("postImage");
-  const uploadBtn = document.getElementById("uploadBtn");
-  const uploadMsg = document.getElementById("uploadMsg");
-  const previewBox = document.getElementById("previewBox");
-
-  if (!postText || !postImage || !uploadBtn) return;
-
-  // 🖼️ Preview gambar
-  postImage.addEventListener("change", () => {
-    const file = postImage.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      previewBox.innerHTML = `<img src="${e.target.result}" alt="preview">`;
-    };
-    reader.readAsDataURL(file);
-  });
-
-  // 🚀 Upload ke Cloudinary + simpan ke Firestore
-  uploadBtn.addEventListener("click", async () => {
-    const text = postText.value.trim();
-    const file = postImage.files[0];
-    const user = auth.currentUser;
-
-    if (!text && !file) {
-      uploadMsg.textContent = "❗ Harap isi teks atau upload gambar dulu.";
-      return;
-    }
-
-    uploadMsg.textContent = "⏳ Mengupload...";
-
-    try {
-      let imageUrl = "";
-
-      // 🖼️ Upload ke Cloudinary (kalau ada gambar)
-      if (file) {
-        const data = new FormData();
-        data.append("file", file);
-        data.append("upload_preset", "forumjb"); // ganti dengan upload preset kamu
-        data.append("cloud_name", "dvjfrrusn"); // ganti dengan nama akun kamu
-
-        const res = await fetch("https://api.cloudinary.com/v1_1/dvjfrrusn/image/upload", {
-          method: "POST",
-          body: data,
-        });
-
-        const json = await res.json();
-        imageUrl = json.secure_url;
-        console.log("📸 URL Cloudinary:", imageUrl);
-      }
-
-      // 🔥 Simpan ke Firestore
-      await addDoc(collection(db, "posts"), {
-        user: user ? user.email : "Anonim",
-        text: text,
-        image: imageUrl,
-        createdAt: serverTimestamp()
-      });
-
-      uploadMsg.textContent = "✅ Postingan berhasil disimpan!";
-      console.log("📦 Postingan tersimpan ke Firestore.");
-
-      // Reset form
-      postText.value = "";
-      postImage.value = "";
-      previewBox.innerHTML = "";
-
-    } catch (e) {
-      console.error("❌ Gagal upload/post:", e);
-      uploadMsg.textContent = "❌ Gagal upload atau simpan posting.";
-    }
-  });
-}
-  
   function renderPosts(list) {
-    postList.innerHTML = list.map(
-      p => `
+    postList.innerHTML = list.map(p => `
       <div class="post-card">
         <div class="post-header">
           <img src="../assets/icons/profile.png" class="post-avatar">
@@ -258,8 +161,7 @@ function loadPostPage() {
         <p>${p.isi}</p>
         <img src="${p.gambar}" class="post-image">
       </div>
-    `
-    ).join("");
+    `).join("");
   }
 
   renderPosts(postinganMengikuti);
@@ -274,6 +176,81 @@ function loadPostPage() {
     btnJelajahi.classList.add("active");
     btnMengikuti.classList.remove("active");
     renderPosts(postinganJelajahi);
+  });
+}
+
+// ==============================
+// ➕ HALAMAN POST (UPLOAD & FIRESTORE)
+// ==============================
+function loadPostPage() {
+  const postText = document.getElementById("postText");
+  const postImage = document.getElementById("postImage");
+  const uploadBtn = document.getElementById("uploadBtn");
+  const uploadMsg = document.getElementById("uploadMsg");
+  const previewBox = document.getElementById("previewBox");
+
+  if (!postText || !postImage || !uploadBtn) return;
+
+  // Preview gambar
+  postImage.addEventListener("change", () => {
+    const file = postImage.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      previewBox.innerHTML = `<img src="${e.target.result}" alt="preview">`;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Upload gambar ke Cloudinary + simpan ke Firestore
+  uploadBtn.addEventListener("click", async () => {
+    const text = postText.value.trim();
+    const file = postImage.files[0];
+    const user = auth.currentUser;
+
+    if (!text && !file) {
+      uploadMsg.textContent = "❗ Harap isi teks atau upload gambar.";
+      return;
+    }
+
+    uploadMsg.textContent = "⏳ Mengupload...";
+
+    try {
+      let imageUrl = "";
+
+      if (file) {
+        const data = new FormData();
+        data.append("file", file);
+        data.append("upload_preset", "forumjb");
+        data.append("cloud_name", "dvjfrrusn");
+
+        const res = await fetch("https://api.cloudinary.com/v1_1/dvjfrrusn/image/upload", {
+          method: "POST",
+          body: data
+        });
+
+        const json = await res.json();
+        imageUrl = json.secure_url || "";
+      }
+
+      await addDoc(collection(db, "posts"), {
+        user: user ? user.email : "Anonim",
+        text: text,
+        image: imageUrl,
+        createdAt: serverTimestamp()
+      });
+
+      uploadMsg.textContent = "✅ Postingan berhasil disimpan!";
+      console.log("📦 Postingan tersimpan ke Firestore.");
+
+      postText.value = "";
+      postImage.value = "";
+      previewBox.innerHTML = "";
+
+    } catch (e) {
+      console.error("❌ Gagal upload/post:", e);
+      uploadMsg.textContent = "❌ Gagal upload atau simpan posting.";
+    }
   });
 }
 
