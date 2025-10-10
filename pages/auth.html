@@ -48,8 +48,11 @@
 
   registerBtn.addEventListener("click", async () => {
     try {
-      await createUserWithEmailAndPassword(auth, email.value, password.value);
-      msg.textContent = "✅ Akun berhasil dibuat!";
+      await signInWithEmailAndPassword(auth, email.value, password.value);
+msg.textContent = "✅ Login berhasil!";
+setTimeout(() => {
+  window.location.href = "../index.html"; // pindah ke aplikasi utama
+}, 1000);
     } catch (e) {
       console.error("❌ Gagal daftar:", e);
       msg.textContent = "❌ Gagal daftar: " + e.code;
