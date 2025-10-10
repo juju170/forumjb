@@ -9,13 +9,9 @@ import {
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
 import {
   getFirestore,
-  collection,
-  addDoc,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import {
   collection,
   addDoc,
   serverTimestamp,
@@ -140,7 +136,7 @@ function showUserProfile(user) {
 }
 
 // ==============================
-// 🏠 BERANDA (POST DUMMY)
+// 🏠 HALAMAN BERANDA (REALTIME FIRESTORE)
 // ==============================
 function loadHomePage() {
   const postList = document.getElementById("postList");
@@ -149,6 +145,7 @@ function loadHomePage() {
 
   if (!postList) return;
 
+  // 🔥 Import tambahan fungsi Firestore untuk query realtime
   import {
     collection,
     query,
@@ -156,29 +153,56 @@ function loadHomePage() {
     onSnapshot
   } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-  // 🔥 Ambil data posting dari Firestore realtime
-  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-  onSnapshot(q, (snapshot) => {
+  // ==============================
+  // 🧠 Fungsi render posting
+  // ==============================
+  function renderPosts(snapshot) {
+    if (snapshot.empty) {
+      postList.innerHTML = "<p style='text-align:center;color:#777;'>Belum ada postingan 😢</p>";
+      return;
+    }
+
+    // Bersihkan list lama
     postList.innerHTML = "";
 
     snapshot.forEach((doc) => {
       const data = doc.data();
-      const html = `
+      const user = data.user || "Anonim";
+      const text = data.text || "";
+      const image = data.image || "";
+      const time = data.createdAt
+        ? new Date(data.createdAt.seconds * 1000).toLocaleString()
+        : "Baru saja";
+
+      // Buat tampilan kartu posting
+      const postHTML = `
         <div class="post-card">
           <div class="post-header">
-            <img src="../assets/icons/profile.png" class="post-avatar">
-            <span class="post-author">${data.user || "Anonim"}</span>
+            <img src="../assets/icons/profile.png" class="post-avatar" alt="avatar">
+            <span class="post-author">${user}</span>
           </div>
-          <p>${data.text || ""}</p>
-          ${data.image ? `<img src="${data.image}" class="post-image">` : ""}
-          <small style="color:#888;">📅 ${data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleString() : "Baru saja"}</small>
+          <p class="post-text">${text}</p>
+          ${image ? `<img src="${image}" class="post-image" alt="gambar posting">` : ""}
+          <div class="post-footer">
+            <small style="color:#888;">📅 ${time}</small>
+          </div>
         </div>
       `;
-      postList.insertAdjacentHTML("beforeend", html);
+      postList.insertAdjacentHTML("beforeend", postHTML);
     });
+  }
+
+  // ==============================
+  // 🔥 Ambil data Firestore realtime
+  // ==============================
+  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+  onSnapshot(q, (snapshot) => {
+    renderPosts(snapshot);
   });
 
-  // Tombol filter (dummy)
+  // ==============================
+  // 🔘 Tombol Filter (sementara dummy)
+  // ==============================
   if (btnMengikuti && btnJelajahi) {
     btnMengikuti.addEventListener("click", () => {
       btnMengikuti.classList.add("active");
@@ -190,34 +214,6 @@ function loadHomePage() {
       btnMengikuti.classList.remove("active");
     });
   }
-}
-
-  function renderPosts(list) {
-    postList.innerHTML = list.map(p => `
-      <div class="post-card">
-        <div class="post-header">
-          <img src="../assets/icons/profile.png" class="post-avatar">
-          <span class="post-author">${p.nama}</span>
-        </div>
-        <p>${p.isi}</p>
-        <img src="${p.gambar}" class="post-image">
-      </div>
-    `).join("");
-  }
-
-  renderPosts(postinganMengikuti);
-
-  btnMengikuti.addEventListener("click", () => {
-    btnMengikuti.classList.add("active");
-    btnJelajahi.classList.remove("active");
-    renderPosts(postinganMengikuti);
-  });
-
-  btnJelajahi.addEventListener("click", () => {
-    btnJelajahi.classList.add("active");
-    btnMengikuti.classList.remove("active");
-    renderPosts(postinganJelajahi);
-  });
 }
 
 // ==============================
