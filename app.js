@@ -20,6 +20,7 @@ import {
   onSnapshot,
   doc,
   updateDoc,
+  deleteDoc,
   arrayUnion,
   arrayRemove
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
@@ -383,22 +384,22 @@ function renderPosts(snapshot, postList) {
 
   // 🗑️ Hapus posting
   deleteBtns.forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const postCard = btn.closest(".post-card");
-      const postId = postCard.dataset.id;
+  btn.addEventListener("click", async () => {
+    const postCard = btn.closest(".post-card");
+    const postId = postCard.dataset.id;
 
-      if (!confirm("Yakin mau hapus posting ini?")) return;
+    if (!confirm("Yakin mau hapus posting ini?")) return;
 
-      try {
-        await deleteDoc(doc(db, "posts", postId));
-        postCard.remove();
-        showToast("🗑️ Postingan berhasil dihapus!");
-      } catch (err) {
-        console.error("❌ Gagal hapus posting:", err);
-      }
-    });
+    try {
+      await deleteDoc(doc(db, "posts", postId));
+      postCard.remove();
+      showToast("🗑️ Postingan berhasil dihapus!");
+    } catch (err) {
+      console.error("❌ Gagal hapus posting:", err);
+      showToast("❌ Gagal hapus posting: " + err.message);
+    }
   });
-}
+});
 
 // ==============================
 // ➕ HALAMAN POST
