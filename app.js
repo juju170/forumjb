@@ -173,8 +173,9 @@ function loadHomePage() {
   }
 }
 
+
 // ==============================
-// 🧩 RENDER POSTINGAN LENGKAP
+// 🌟 RENDER POSTINGAN (FULL ENHANCED VERSION)
 // ==============================
 function renderPosts(snapshot, postList) {
   if (!postList) return;
@@ -192,55 +193,68 @@ function renderPosts(snapshot, postList) {
   snapshot.forEach((docSnap) => {
     const data = docSnap.data();
     const postId = docSnap.id;
-    const user = data.user || "Anonim";
+    const user =
+      data.userDisplay || auth.currentUser?.displayName || data.user || "Anonim";
     const text = data.text || "";
     const image = data.image || "";
     const likes = data.likes || [];
     const comments = data.comments || [];
     const isLiked = likes.includes(auth.currentUser?.email);
+
+    // 🕒 Format waktu posting Indonesia
     const time = data.createdAt
-      ? new Date(data.createdAt.seconds * 1000).toLocaleString()
+      ? new Date(data.createdAt.seconds * 1000).toLocaleString("id-ID", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
       : "Baru saja";
 
-    // ✅ Struktur tampilan postingan
+    // ✅ Urutkan komentar terbaru di atas
+    const sortedComments = [...comments].sort(
+      (a, b) =>
+        new Date(b.time || 0).getTime() - new Date(a.time || 0).getTime()
+    );
+
+    // ✅ Struktur tampilan posting
     const postHTML = `
-      <div class="post-card" data-id="${postId}">
+      <div class="post-card fade-in" data-id="${postId}">
         <div class="post-header">
-          <img src="${data.userPhoto || 'assets/icons/profile.png'}" class="post-avatar" alt="User">
+          <img src="${data.userPhoto || "assets/icons/profile.png"}" class="post-avatar" alt="User">
           <div class="post-author">${user}</div>
         </div>
 
         <p class="post-text">${text}</p>
 
-        ${image ? `<img src="${image}" alt="gambar" class="post-img" loading="lazy" />` : ""}
+        ${
+          image
+            ? `<img src="${image}" alt="gambar" class="post-img" loading="lazy" />`
+            : ""
+        }
 
         <div class="post-footer">
           <button class="like-btn ${isLiked ? "liked" : ""}">❤️ ${likes.length}</button>
           <button class="comment-btn">💬 ${comments.length}</button>
-          const time = data.createdAt
-  ? new Date(data.createdAt.seconds * 1000).toLocaleString("id-ID", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  : "Baru saja";
-                  </div>
+          <small style="float:right;color:#888;">📅 ${time}</small>
+        </div>
 
         <div class="comment-box hidden">
-          <input type="text" class="comment-input" placeholder="Tulis komentar..." />
+          <input type="text" class="comment-input" maxlength="200" placeholder="Tulis komentar (maks 200 karakter)..." />
           <button class="send-comment">Kirim</button>
           <div class="comment-list">
-  ${comments
-    .map((c) => `
-      <p>
-        <b>${c.user}</b>: ${c.text}<br>
-        <small style="color:#888;">🕒 ${c.time || ""}</small>
-      </p>
-    `)
-    .join("")}
-</div>
+            ${sortedComments
+              .map(
+                (c) => `
+                  <p class="comment-item fade-in">
+                    <b>${c.user}</b>: ${c.text}<br>
+                    <small style="color:#888;">🕒 ${c.time || ""}</small>
+                  </p>
+                `
+              )
+              .join("")}
+          </div>
         </div>
       </div>
     `;
@@ -265,6 +279,7 @@ function renderPosts(snapshot, postList) {
       if (!userEmail) return alert("Login dulu untuk menyukai postingan!");
 
       const isLiked = btn.classList.contains("liked");
+      btn.classList.add("pop"); // animasi efek kecil
 
       try {
         await updateDoc(postRef, {
@@ -273,10 +288,12 @@ function renderPosts(snapshot, postList) {
       } catch (err) {
         console.error("❌ Gagal update like:", err);
       }
+
+      setTimeout(() => btn.classList.remove("pop"), 250); // hapus efek setelah 0.25s
     });
   });
 
-  // 💬 Tampilkan/Sembunyikan kolom komentar
+  // 💬 Tampilkan / sembunyikan kolom komentar
   commentBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
       const box = btn.closest(".post-card").querySelector(".comment-box");
@@ -291,31 +308,36 @@ function renderPosts(snapshot, postList) {
       const postId = postCard.dataset.id;
       const input = postCard.querySelector(".comment-input");
       const text = input.value.trim();
-      if (!text) return;
+      if (!text) return alert("Komentar tidak boleh kosong!");
+      if (text.length > 200) return alert("Komentar terlalu panjang (maks 200 karakter)!");
 
       const now = new Date();
-const comment = {
-  user: auth.currentUser?.email || "Anonim",
-  text,
-  time: now.toLocaleString("id-ID", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }),
-};
+      const comment = {
+        user:
+          auth.currentUser?.displayName ||
+          auth.currentUser?.email ||
+          "Anonim",
+        text,
+        time: now.toLocaleString("id-ID", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
 
-try {
-  await updateDoc(doc(db, "posts", postId), {
-    comments: arrayUnion(comment),
-  });
+      try {
+        await updateDoc(doc(db, "posts", postId), {
+          comments: arrayUnion(comment),
+        });
 
         // 🔥 Langsung tampil di bawah tanpa reload
         const commentList = postCard.querySelector(".comment-list");
         const newComment = document.createElement("p");
-        newComment.innerHTML = `<b>${comment.user}</b>: ${comment.text}`;
-        commentList.appendChild(newComment);
+        newComment.className = "comment-item fade-in";
+        newComment.innerHTML = `<b>${comment.user}</b>: ${comment.text}<br><small style="color:#888;">🕒 ${comment.time}</small>`;
+        commentList.prepend(newComment); // komentar baru di atas
 
         input.value = "";
       } catch (err) {
