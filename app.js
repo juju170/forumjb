@@ -281,15 +281,15 @@ function renderPosts(snapshot, postList) {
       if (!text) return;
 
       const comment = {
-        user: auth.currentUser?.email || "Anonim",
-        text,
-        time: serverTimestamp(),
-      };
+  user: auth.currentUser?.email || "Anonim",
+  text,
+  time: new Date().toLocaleString(), // ✅ pakai waktu lokal agar valid
+};
 
-      try {
-        await updateDoc(doc(db, "posts", postId), {
-          comments: arrayUnion(comment),
-        });
+try {
+  await updateDoc(doc(db, "posts", postId), {
+    comments: arrayUnion(comment),
+  });
 
         // 🔥 Langsung tampil di bawah tanpa reload
         const commentList = postCard.querySelector(".comment-list");
