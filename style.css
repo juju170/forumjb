@@ -347,3 +347,57 @@ main {
 .post-actions button:hover {
   opacity: 1;
 }
+
+/* 🌟 Animasi Efek Like */
+@keyframes pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.like-btn.pop {
+  animation: pop 0.25s ease-in-out;
+}
+
+/* 💬 Efek muncul komentar */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* 🗑️ Hapus posting - efek hilang */
+.fade-out {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* 🔘 Tombol interaktif */
+button {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+button:active {
+  transform: scale(0.9);
+  opacity: 0.7;
+}
+
+/* ✅ Notifikasi visual kecil */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(40,40,40,0.9);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  z-index: 1000;
+  opacity: 0;
+  animation: fadeIn 0.4s ease forwards;
+}
