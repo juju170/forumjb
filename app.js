@@ -170,6 +170,9 @@ function loadHomePage() {
       btnJelajahi.classList.add("active");
       btnMengikuti.classList.remove("active");
     });
+    onSnapshot(q, (snapshot) => {
+  renderPosts(snapshot, postList);
+});
   }
 }
 
@@ -178,6 +181,10 @@ function loadHomePage() {
 // 🌟 RENDER POSTINGAN (FULL ENHANCED VERSION)
 // ==============================
 function renderPosts(snapshot, postList) {
+  if (!auth.currentUser) {
+  console.warn("⚠️ Tidak ada user login, beberapa fitur nonaktif.");
+  }
+  
   if (!postList) return;
 
   if (snapshot.empty) {
@@ -230,7 +237,7 @@ function renderPosts(snapshot, postList) {
 
         ${
           image
-            ? `<img src="${image}" alt="gambar" class="post-img" loading="lazy" />`
+            ? `<img src="${image}" alt="Gambar postingan dari ${user}" class="post-img" loading="lazy" />`
             : ""
         }
 
@@ -400,11 +407,13 @@ function loadPostPage() {
       }
 
       await addDoc(collection(db, "posts"), {
-        user: user ? user.email : "Anonim",
-        text,
-        image: imageUrl,
-        createdAt: serverTimestamp()
-      });
+  user: user ? user.email : "Anonim",
+  userDisplay: user?.displayName || user?.email || "Anonim",
+  userPhoto: user?.photoURL || "assets/icons/profile.png",
+  text,
+  image: imageUrl,
+  createdAt: serverTimestamp()
+});
 
       uploadMsg.textContent = "✅ Postingan berhasil disimpan!";
       postText.value = "";
