@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laporan Warga 🚨</title>
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+  <main class="admin-container">
+    <h2>🚨 Daftar Laporan Warga</h2>
+    <p style="color:#666;">Berikut laporan yang dikirim oleh warga terhadap postingan.</p>
+    <div id="reportList" class="report-list">
+      <p>Memuat laporan...</p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // ⚙️ Config Firebase kamu (copy dari app.js)
+    const firebaseConfig = {
+      apiKey: "ISI_DENGAN_PUNYAMU",
+      authDomain: "ISI_DENGAN_PUNYAMU",
+      projectId: "ISI_DENGAN_PUNYAMU",
+      storageBucket: "ISI_DENGAN_PUNYAMU",
+      messagingSenderId: "ISI_DENGAN_PUNYAMU",
+      appId: "ISI_DENGAN_PUNYAMU"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const reportList = document.getElementById("reportList");
+
+    async function loadReports() {
+      reportList.innerHTML = "<p>📂 Mengambil data laporan...</p>";
+      const snapshot = await getDocs(collection(db, "reports"));
+      if (snapshot.empty) {
+        reportList.innerHTML = "<p style='color:#999;'>Belum ada laporan.</p>";
+        return;
+      }
+
+      reportList.innerHTML = "";
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const id = docSnap.id;
+
+        const card = document.createElement("div");
+        card.classList.add("report-card");
+        card.innerHTML = `
+          <div class="report-info">
+            <p><b>📄 Post ID:</b> ${data.postId}</p>
+            <p><b>👤 Pelapor:</b> ${data.reporter}</p>
+            <p><b>🗒️ Alasan:</b> ${data.reason}</p>
+            <p><b>🕒 Waktu:</b> ${new Date(data.time).toLocaleString("id-ID")}</p>
+          </div>
+          <button class="delete-report">Hapus</button>
+        `;
+
+        card.querySelector(".delete-report").addEventListener("click", async () => {
+          if (!confirm("Yakin mau hapus laporan ini?")) return;
+          await deleteDoc(doc(db, "reports", id));
+          card.remove();
+          alert("✅ Laporan dihapus!");
+        });
+
+        reportList.appendChild(card);
+      });
+    }
+
+    loadReports();
+  </script>
+</body>
+</html>
