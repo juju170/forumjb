@@ -198,20 +198,32 @@ main {
 }
 
 .post-card {
-  background: white;
-  border-radius: 12px;
+  background: #fff;
+  border-radius: 16px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  padding: 15px;
-  margin: 10px auto;
-  max-width: 400px;
+  margin: 12px auto;
+  padding: 12px;
+  width: 95%;
+  max-width: 500px;
   overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.2s;
+}
+
+.post-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
 
 .post-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.post-user {
+  font-weight: 600;
+  color: #333;
 }
 
 .post-avatar {
@@ -229,8 +241,11 @@ main {
 .post-text {
   margin: 10px 0;
   text-align: left;
+  color: #444;
   font-size: 14px;
   line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 /* 🔧 Atur ukuran gambar di posting */
@@ -242,6 +257,7 @@ main {
   border-radius: 12px;
   display: block;
   margin: 0 auto;
+  margin-top: 6px;
 }
 
 .post-footer {
@@ -333,19 +349,46 @@ main {
   margin-left: auto;
   display: flex;
   gap: 6px;
+  justify-content: space-around;
+  align-items: center;
+  margin-top: 8px;
+  border-top: 1px solid #eee;
+  padding-top: 6px;
 }
 
 .post-actions button {
   background: none;
   border: none;
+  color: #555;
   cursor: pointer;
   font-size: 16px;
   opacity: 0.7;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
   transition: opacity 0.2s;
 }
 
 .post-actions button:hover {
+  background: rgba(0,0,0,0.05);
   opacity: 1;
+}
+
+/* teks panjang auto collapse */
+.post-text.collapsed {
+  max-height: 80px;
+  overflow: hidden;
+  position: relative;
+}
+
+.read-more {
+  color: #1976d2;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-block;
+  margin-top: 4px;
 }
 
 /* 🌟 Animasi Efek Like */
