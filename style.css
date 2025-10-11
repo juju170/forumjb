@@ -459,11 +459,14 @@ button:active {
 }
 
 .report-img {
-  width: 100px;
-  height: 100px;
+  width: 120px;
+  height: 120px;
   border-radius: 10px;
-  object-fit: cover;
+  object-fit: contain;         /* ✅ tampil utuh */
+  background-color: #fff;      /* ✅ beri ruang putih */
   border: 1px solid #ccc;
+  padding: 4px;                /* beri jarak kecil agar gak mepet */
+  box-sizing: border-box;      /* biar padding gak nambah ukuran */
 }
 
 .report-card:hover {
