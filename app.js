@@ -430,11 +430,26 @@ function renderPosts(snapshot, postList) {
     });
   });
 
-  // ==============================
-  // ✏️ EDIT & 🗑️ HAPUS KOMENTAR (DARI div.txt)
-  // ==============================
+// ==============================
+// ✏️ EDIT & 🗑️ HAPUS KOMENTAR (DARI div.txt)
+// ==============================
+
+// Cegah event listener dobel (penting!)
+if (!postList.dataset.listenerAdded) {
+  postList.dataset.listenerAdded = "true";
+
   postList.addEventListener("click", async (e) => {
     const target = e.target;
+    const postCard = target.closest(".post-card");
+    if (!postCard) return;
+    
+    const postId = postCard.dataset.id;
+    const postRef = doc(db, "posts", postId);
+    const userEmail = auth.currentUser?.email;
+
+    if (!userEmail) return showToast("Login dulu untuk mengelola komentar!");
+  
+      const target = e.target;
     const postCard = target.closest(".post-card");
     if (!postCard) return; // Pastikan kita berada di dalam post-card
     
@@ -500,6 +515,7 @@ function renderPosts(snapshot, postList) {
     }
   });
 }
+}          
 
 
 // ==============================
