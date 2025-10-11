@@ -433,3 +433,48 @@ button:active {
 .share-btn:hover, .report-btn:hover {
   opacity: 1;
 }
+
+.admin-container {
+  padding: 16px;
+  max-width: 800px;
+  margin: auto;
+}
+
+.report-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.report-card {
+  border: 1px solid #ccc;
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+}
+
+.report-card:hover {
+  transform: scale(1.01);
+}
+
+.report-info p {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.delete-report {
+  background: #e53935;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  float: right;
+}
+
+.delete-report:hover {
+  background: #c62828;
+}
