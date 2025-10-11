@@ -224,10 +224,15 @@ function renderPosts(snapshot, postList) {
           <input type="text" class="comment-input" placeholder="Tulis komentar..." />
           <button class="send-comment">Kirim</button>
           <div class="comment-list">
-            ${comments
-              .map((c) => `<p><b>${c.user}</b>: ${c.text}</p>`)
-              .join("")}
-          </div>
+  ${comments
+    .map((c) => `
+      <p>
+        <b>${c.user}</b>: ${c.text}<br>
+        <small style="color:#888;">🕒 ${c.time || ""}</small>
+      </p>
+    `)
+    .join("")}
+</div>
         </div>
       </div>
     `;
