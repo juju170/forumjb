@@ -420,3 +420,16 @@ button:active {
 .comment-actions button:hover {
   opacity: 1;
 }
+
+.share-btn, .report-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.share-btn:hover, .report-btn:hover {
+  opacity: 1;
+}
