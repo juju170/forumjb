@@ -174,13 +174,16 @@ function loadHomePage() {
 }
 
 // ==============================
-// 🧩 RENDER POSTINGAN
+// 🧩 RENDER POSTINGAN LENGKAP
 // ==============================
 function renderPosts(snapshot, postList) {
   if (!postList) return;
 
   if (snapshot.empty) {
-    postList.innerHTML = `<p style="text-align:center;color:#777;margin-top:40px;">Belum ada postingan 😢</p>`;
+    postList.innerHTML = `
+      <p style="text-align:center;color:#777;margin-top:40px;">
+        Belum ada postingan 😢
+      </p>`;
     return;
   }
 
@@ -199,35 +202,47 @@ function renderPosts(snapshot, postList) {
       ? new Date(data.createdAt.seconds * 1000).toLocaleString()
       : "Baru saja";
 
+    // ✅ Struktur tampilan postingan
     const postHTML = `
       <div class="post-card" data-id="${postId}">
         <div class="post-header">
           <img src="${data.userPhoto || 'assets/icons/profile.png'}" class="post-avatar" alt="User">
           <div class="post-author">${user}</div>
         </div>
+
         <p class="post-text">${text}</p>
+
         ${image ? `<img src="${image}" alt="gambar" class="post-img" loading="lazy" />` : ""}
+
         <div class="post-footer">
           <button class="like-btn ${isLiked ? "liked" : ""}">❤️ ${likes.length}</button>
           <button class="comment-btn">💬 ${comments.length}</button>
           <small style="float:right;color:#888;">📅 ${time}</small>
         </div>
+
         <div class="comment-box hidden">
           <input type="text" class="comment-input" placeholder="Tulis komentar..." />
           <button class="send-comment">Kirim</button>
           <div class="comment-list">
-            ${comments.map(c => `<p><b>${c.user}</b>: ${c.text}</p>`).join("")}
+            ${comments
+              .map((c) => `<p><b>${c.user}</b>: ${c.text}</p>`)
+              .join("")}
           </div>
         </div>
       </div>
     `;
+
     postList.insertAdjacentHTML("beforeend", postHTML);
   });
 
+  // ==============================
+  // ❤️ LIKE & 💬 KOMENTAR EVENT
+  // ==============================
   const likeBtns = document.querySelectorAll(".like-btn");
   const commentBtns = document.querySelectorAll(".comment-btn");
   const sendBtns = document.querySelectorAll(".send-comment");
 
+  // ❤️ Sistem Like
   likeBtns.forEach((btn) => {
     btn.addEventListener("click", async () => {
       const postCard = btn.closest(".post-card");
@@ -237,6 +252,7 @@ function renderPosts(snapshot, postList) {
       if (!userEmail) return alert("Login dulu untuk menyukai postingan!");
 
       const isLiked = btn.classList.contains("liked");
+
       try {
         await updateDoc(postRef, {
           likes: isLiked ? arrayRemove(userEmail) : arrayUnion(userEmail),
@@ -247,6 +263,7 @@ function renderPosts(snapshot, postList) {
     });
   });
 
+  // 💬 Tampilkan/Sembunyikan kolom komentar
   commentBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
       const box = btn.closest(".post-card").querySelector(".comment-box");
@@ -254,6 +271,7 @@ function renderPosts(snapshot, postList) {
     });
   });
 
+  // ✍️ Kirim komentar baru
   sendBtns.forEach((btn) => {
     btn.addEventListener("click", async () => {
       const postCard = btn.closest(".post-card");
@@ -272,6 +290,13 @@ function renderPosts(snapshot, postList) {
         await updateDoc(doc(db, "posts", postId), {
           comments: arrayUnion(comment),
         });
+
+        // 🔥 Langsung tampil di bawah tanpa reload
+        const commentList = postCard.querySelector(".comment-list");
+        const newComment = document.createElement("p");
+        newComment.innerHTML = `<b>${comment.user}</b>: ${comment.text}`;
+        commentList.appendChild(newComment);
+
         input.value = "";
       } catch (err) {
         console.error("❌ Gagal kirim komentar:", err);
