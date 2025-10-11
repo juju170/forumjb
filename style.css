@@ -401,3 +401,22 @@ button:active {
   opacity: 0;
   animation: fadeIn 0.4s ease forwards;
 }
+
+.comment-actions {
+  float: right;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.comment-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.comment-actions button:hover {
+  opacity: 1;
+}
