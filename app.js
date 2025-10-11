@@ -208,10 +208,12 @@ function renderPosts(snapshot, postList) {
         <p class="post-text">${text}</p>
         ${image ? `<img src="${image}" class="post-img" loading="lazy" />` : ""}
         <div class="post-footer">
-          <button class="like-btn ${isLiked ? "liked" : ""}">❤️ ${likes.length}</button>
-          <button class="comment-btn">💬 ${comments.length}</button>
-          <small style="float:right;color:#888;">📅 ${time}</small>
-        </div>
+  <button class="like-btn ${isLiked ? "liked" : ""}">❤️ ${likes.length}</button>
+  <button class="comment-btn">💬 ${comments.length}</button>
+  <button class="share-btn">🔗</button>
+  <button class="report-btn">🚨</button>
+  <small style="float:right;color:#888;">📅 ${time}</small>
+</div>
         <div class="comment-box hidden">
           <input type="text" class="comment-input" maxlength="200" placeholder="Tulis komentar..." />
           <button class="send-comment">Kirim</button>
@@ -227,6 +229,52 @@ function renderPosts(snapshot, postList) {
       </div>`;
     postList.insertAdjacentHTML("beforeend", postHTML);
   });
+
+  // ==============================
+// 🔗 SHARE POSTINGAN
+// ==============================
+const shareBtns = document.querySelectorAll(".share-btn");
+shareBtns.forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const postCard = btn.closest(".post-card");
+    const postId = postCard.dataset.id;
+    const shareUrl = `${window.location.origin}/forumjb/index.html?post=${postId}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast("🔗 Link postingan disalin!");
+    } catch (err) {
+      console.error("❌ Gagal salin link:", err);
+      showToast("❌ Tidak bisa menyalin link.");
+    }
+  });
+});
+
+// ==============================
+// 🚨 LAPORKAN POSTINGAN
+// ==============================
+const reportBtns = document.querySelectorAll(".report-btn");
+reportBtns.forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const postCard = btn.closest(".post-card");
+    const postId = postCard.dataset.id;
+    if (!confirm("Laporkan posting ini? (gunakan jika konten tidak pantas)")) return;
+    const alasan = prompt("Tulis alasan laporan (misal: menipu, tidak sopan):");
+    if (!alasan || alasan.trim() === "") return showToast("⚠️ Alasan tidak boleh kosong!");
+
+    try {
+      await addDoc(collection(db, "reports"), {
+        postId,
+        reporter: auth.currentUser?.email || "Anonim",
+        reason: alasan.trim(),
+        time: new Date().toISOString(),
+      });
+      showToast("🚨 Laporan terkirim ke admin!");
+    } catch (err) {
+      console.error("❌ Gagal kirim laporan:", err);
+      showToast("❌ Gagal mengirim laporan.");
+    }
+  });
+});
 
   // ==============================
 // ✏️ EDIT & 🗑️ HAPUS POSTING
