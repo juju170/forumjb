@@ -8,14 +8,40 @@
   <style>
     .admin-container {
       padding: 16px;
-      max-width: 850px;
+      max-width: 900px;
       margin: auto;
+    }
+
+    h2 span#reportCount {
+      color: #1976d2;
+    }
+
+    .search-box {
+      display: flex;
+      margin: 10px 0 20px 0;
+    }
+
+    #searchInput {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px 0 0 8px;
+      outline: none;
+    }
+
+    #searchBtn {
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 0 8px 8px 0;
+      cursor: pointer;
     }
 
     .report-actions {
       display: flex;
       gap: 10px;
-      margin: 15px 0;
+      margin: 10px 0 15px 0;
     }
 
     .ignore-btn, .delete-btn {
@@ -49,12 +75,23 @@
       border-radius: 12px;
       padding: 12px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      transition: transform 0.1s ease;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
     }
 
-    .report-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
+    .report-card:hover {
+      transform: scale(1.01);
+    }
+
+    .report-img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      flex-shrink: 0;
     }
 
     .report-info {
@@ -67,16 +104,37 @@
     }
 
     .select-report {
-      margin-right: 10px;
+      margin-right: 8px;
       transform: scale(1.2);
       accent-color: #1976d2;
+    }
+
+    .no-report {
+      color: #999;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .report-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .report-img {
+        width: 100%;
+        height: 200px;
+      }
     }
   </style>
 </head>
 <body>
   <main class="admin-container">
-    <h2>🚨 Daftar Laporan Warga</h2>
-    <p style="color:#666;">Pilih laporan, lalu pilih tindakan di bawah ini:</p>
+    <h2>🚨 Daftar Laporan Warga (<span id="reportCount">0</span>)</h2>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Cari laporan (pelapor, alasan, atau ID posting)..." />
+      <button id="searchBtn">Cari</button>
+    </div>
 
     <div class="report-actions">
       <button id="ignoreSelected" class="ignore-btn">🙈 Abaikan</button>
@@ -91,23 +149,28 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { 
-      getFirestore, collection, getDocs, deleteDoc, doc 
+      getFirestore, collection, getDocs, deleteDoc, doc, query, orderBy
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // 🔥 GANTI DENGAN CONFIG KAMU
+    // ⚙️ GANTI DENGAN PUNYAMU
     const firebaseConfig = {
       apiKey: "AIzaSyC8uiIvWOZPcSZOzCGnlRMA7WJ7TIQfy5s",
     authDomain: "tts-indonesia-bf14e.firebaseapp.com",
     projectId: "tts-indonesia-bf14e",
     storageBucket: "tts-indonesia-bf14e.firebasestorage.app",
     messagingSenderId: "240052198349",
-    appId: "1:240052198349:web:112553f8ca408b2fcc4284",
-    measurementId: "G-KSN1NV6V4J"
+    appId: "1:240052198349:web:112553f8ca408b2fcc4284"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+
     const reportList = document.getElementById("reportList");
+    const reportCount = document.getElementById("reportCount");
+    const searchInput = document.getElementById("searchInput");
+    const searchBtn = document.getElementById("searchBtn");
+
+    let allReports = [];
 
     // ==============================
     // 📋 MUAT SEMUA LAPORAN
@@ -115,39 +178,77 @@
     async function loadReports() {
       reportList.innerHTML = "<p>📂 Mengambil data laporan...</p>";
 
-      const snapshot = await getDocs(collection(db, "reports"));
+      const q = query(collection(db, "reports"), orderBy("time", "desc"));
+      const snapshot = await getDocs(q);
+
       if (snapshot.empty) {
-        reportList.innerHTML = "<p style='color:#999;'>Belum ada laporan.</p>";
+        reportList.innerHTML = "<p class='no-report'>Belum ada laporan.</p>";
+        reportCount.textContent = "0";
         return;
       }
 
-      reportList.innerHTML = "";
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        const id = docSnap.id;
+      allReports = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      }));
 
-        const card = document.createElement("div");
-        card.classList.add("report-card");
-        card.innerHTML = `
-          <div class="report-header">
-            <input type="checkbox" class="select-report" data-id="${id}" data-post="${data.postId}" />
-            <div class="report-info">
-              <p><b>📄 Post ID:</b> ${data.postId}</p>
-              <p><b>👤 Pelapor:</b> ${data.reporter}</p>
-              <p><b>🗒️ Alasan:</b> ${data.reason}</p>
-              <p><b>🕒 Waktu:</b> ${new Date(data.time).toLocaleString("id-ID")}</p>
-            </div>
-          </div>
-        `;
-
-        reportList.appendChild(card);
-      });
+      renderReports(allReports);
     }
 
-    loadReports();
+    // ==============================
+    // 🧱 RENDER LAPORAN
+    // ==============================
+    function renderReports(reports) {
+      reportList.innerHTML = "";
+      let count = 0;
+
+      reports.forEach((data) => {
+        const card = document.createElement("div");
+        card.classList.add("report-card");
+
+        const imgPreview = data.image 
+          ? `<img src="${data.image}" alt="Gambar Postingan" class="report-img" />`
+          : `<div class="report-img" style="background:#eee;display:flex;align-items:center;justify-content:center;">🖼️</div>`;
+
+        card.innerHTML = `
+          <input type="checkbox" class="select-report" data-id="${data.id}" data-post="${data.postId}" />
+          ${imgPreview}
+          <div class="report-info">
+            <p><b>📄 Post ID:</b> ${data.postId}</p>
+            <p><b>👤 Pelapor:</b> ${data.reporter}</p>
+            <p><b>🗒️ Alasan:</b> ${data.reason}</p>
+            <p><b>🕒 Waktu:</b> ${new Date(data.time).toLocaleString("id-ID")}</p>
+          </div>
+        `;
+        reportList.appendChild(card);
+        count++;
+      });
+
+      reportCount.textContent = count;
+    }
 
     // ==============================
-    // 🙈 ABAIKAN (HAPUS LAPORAN SAJA)
+    // 🔍 FITUR PENCARIAN
+    // ==============================
+    searchBtn.addEventListener("click", () => {
+      const keyword = searchInput.value.trim().toLowerCase();
+      if (!keyword) return renderReports(allReports);
+
+      const filtered = allReports.filter((r) =>
+        (r.reporter || "").toLowerCase().includes(keyword) ||
+        (r.reason || "").toLowerCase().includes(keyword) ||
+        (r.postId || "").toLowerCase().includes(keyword)
+      );
+
+      renderReports(filtered);
+      if (filtered.length === 0) {
+        reportList.innerHTML = "<p class='no-report'>Tidak ada laporan yang cocok.</p>";
+        reportCount.textContent = "0";
+      }
+    });
+
+    // ==============================
+    // 🙈 ABAIKAN LAPORAN
     // ==============================
     document.getElementById("ignoreSelected").addEventListener("click", async () => {
       const selected = Array.from(document.querySelectorAll(".select-report:checked"));
@@ -159,14 +260,14 @@
         await Promise.all(deletions);
         selected.forEach((el) => el.closest(".report-card").remove());
         alert(`✅ ${selected.length} laporan berhasil dihapus (posting tetap ada).`);
+        updateCount();
       } catch (err) {
         console.error("❌ Gagal hapus laporan:", err);
-        alert("❌ Terjadi kesalahan saat menghapus laporan.");
       }
     });
 
     // ==============================
-    // 🔥 HAPUS POSTINGAN + LAPORANNYA SEKALIGUS
+    // 🔥 HAPUS POSTINGAN + LAPORANNYA
     // ==============================
     document.getElementById("deletePosts").addEventListener("click", async () => {
       const selected = Array.from(document.querySelectorAll(".select-report:checked"));
@@ -174,25 +275,30 @@
       if (!confirm(`⚠️ Hapus ${selected.length} postingan yang dilaporkan?`)) return;
 
       try {
-        // Ambil ID posting unik
         const postIds = [...new Set(selected.map((el) => el.dataset.post))];
-        
-        // Hapus postingan dari koleksi posts
         const postDeletions = postIds.map((pid) => deleteDoc(doc(db, "posts", pid)));
         await Promise.all(postDeletions);
 
-        // Hapus laporan terkait
         const reportDeletions = selected.map((el) => deleteDoc(doc(db, "reports", el.dataset.id)));
         await Promise.all(reportDeletions);
 
-        // Hapus tampilan dari UI
         selected.forEach((el) => el.closest(".report-card").remove());
         alert(`🔥 ${selected.length} laporan & postingan terkait berhasil dihapus.`);
+        updateCount();
       } catch (err) {
         console.error("❌ Gagal hapus postingan dan laporan:", err);
-        alert("❌ Terjadi kesalahan saat menghapus postingan.");
       }
     });
+
+    function updateCount() {
+      const total = document.querySelectorAll(".report-card").length;
+      reportCount.textContent = total;
+      if (total === 0) {
+        reportList.innerHTML = "<p class='no-report'>Belum ada laporan.</p>";
+      }
+    }
+
+    loadReports();
   </script>
 </body>
 </html>
