@@ -217,8 +217,16 @@ function renderPosts(snapshot, postList) {
         <div class="post-footer">
           <button class="like-btn ${isLiked ? "liked" : ""}">❤️ ${likes.length}</button>
           <button class="comment-btn">💬 ${comments.length}</button>
-          <small style="float:right;color:#888;">📅 ${time}</small>
-        </div>
+          const time = data.createdAt
+  ? new Date(data.createdAt.seconds * 1000).toLocaleString("id-ID", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  : "Baru saja";
+                  </div>
 
         <div class="comment-box hidden">
           <input type="text" class="comment-input" placeholder="Tulis komentar..." />
