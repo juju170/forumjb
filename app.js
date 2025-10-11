@@ -55,12 +55,10 @@ async function loadPage(page) {
     const html = await res.text();
     content.innerHTML = html;
 
-    // Navigasi aktif
     buttons.forEach(b => b.classList.remove("active"));
     const activeBtn = document.querySelector(`.nav-btn[data-page="${page}"]`);
     if (activeBtn) activeBtn.classList.add("active");
 
-    // Jalankan logika per halaman
     if (page === "auth") handleAuthEvents();
     if (page === "profile" && auth.currentUser) showUserProfile(auth.currentUser);
     if (page === "home") loadHomePage();
@@ -96,7 +94,7 @@ function handleAuthEvents() {
       try {
         await createUserWithEmailAndPassword(auth, email, password);
         msg.textContent = "✅ Akun berhasil dibuat!";
-        setTimeout(() => (window.location.href = "../index.html"), 1000);
+        setTimeout(() => (window.location.href = "index.html"), 1000);
       } catch (e) {
         msg.textContent = "❌ Gagal daftar: " + e.code;
         console.error(e);
@@ -111,7 +109,7 @@ function handleAuthEvents() {
       try {
         await signInWithEmailAndPassword(auth, email, password);
         msg.textContent = "✅ Login berhasil!";
-        setTimeout(() => (window.location.href = "../index.html"), 1000);
+        setTimeout(() => (window.location.href = "index.html"), 1000);
       } catch (e) {
         msg.textContent = "❌ Gagal login: " + e.code;
         console.error(e);
@@ -157,54 +155,37 @@ function loadHomePage() {
   // ✅ Ambil postingan dari Firestore realtime
   const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
   onSnapshot(q, (snapshot) => {
-    console.log("📦 Jumlah posting terbaca:", snapshot.size);
     renderPosts(snapshot, postList);
   });
 
-  // 🔘 Tombol filter (sementara dummy)
   if (btnMengikuti && btnJelajahi) {
     btnMengikuti.addEventListener("click", () => {
       btnMengikuti.classList.add("active");
       btnJelajahi.classList.remove("active");
     });
-
     btnJelajahi.addEventListener("click", () => {
       btnJelajahi.classList.add("active");
       btnMengikuti.classList.remove("active");
     });
-    onSnapshot(q, (snapshot) => {
-  renderPosts(snapshot, postList);
-});
   }
 }
 
 // ==============================
-// 🧩 RENDER POSTINGAN DENGAN EDIT, HAPUS POST, EDIT & HAPUS KOMENTAR
+// 🧩 RENDER POSTINGAN
 // ==============================
 function renderPosts(snapshot, postList) {
   if (!postList) return;
-
   if (snapshot.empty) {
-    postList.innerHTML = `
-      <p style="text-align:center;color:#777;margin-top:40px;">
-        Belum ada postingan 😢
-      </p>`;
+    postList.innerHTML = `<p style="text-align:center;color:#777;margin-top:40px;">Belum ada postingan 😢</p>`;
     return;
   }
-
   postList.innerHTML = "";
-
   snapshot.forEach((docSnap) => {
     const data = docSnap.data();
     const postId = docSnap.id;
     const userEmail = auth.currentUser?.email;
-    const isOwner = userEmail === data.user; // hanya user pembuat posting
-
-    const user =
-      data.userDisplay ||
-      auth.currentUser?.displayName ||
-      data.user ||
-      "Anonim";
+    const isOwner = userEmail === data.user;
+    const user = data.userDisplay || auth.currentUser?.displayName || data.user || "Anonim";
     const photo = data.userPhoto || "assets/icons/profile.png";
     const text = data.text || "";
     const image = data.image || "";
@@ -213,88 +194,40 @@ function renderPosts(snapshot, postList) {
     const isLiked = likes.includes(userEmail);
 
     const time = data.createdAt
-      ? new Date(data.createdAt.seconds * 1000).toLocaleString("id-ID", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+      ? new Date(data.createdAt.seconds * 1000).toLocaleString("id-ID")
       : "Baru saja";
 
-    // Komentar diurutkan dari terbaru ke terlama
-    const sortedComments = [...comments].sort(
-      (a, b) =>
-        new Date(b.time || 0).getTime() - new Date(a.time || 0).getTime()
-    );
-
+    const sortedComments = [...comments].sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0));
     const postHTML = `
       <div class="post-card fade-in" data-id="${postId}">
         <div class="post-header">
           <img src="${photo}" alt="User" class="post-avatar" />
           <div class="post-author">${user}</div>
-          ${
-            isOwner
-              ? `
-            <div class="post-actions">
-              <button class="edit-post-btn">✏️</button>
-              <button class="delete-post-btn">🗑️</button>
-            </div>
-          `
-              : ""
-          }
+          ${isOwner ? `<div class="post-actions"><button class="edit-post-btn">✏️</button><button class="delete-post-btn">🗑️</button></div>` : ""}
         </div>
-
         <p class="post-text">${text}</p>
-
-        ${
-          image
-            ? `<img src="${image}" alt="Gambar postingan dari ${user}" class="post-img" loading="lazy" />`
-            : ""
-        }
-
+        ${image ? `<img src="${image}" class="post-img" loading="lazy" />` : ""}
         <div class="post-footer">
           <button class="like-btn ${isLiked ? "liked" : ""}">❤️ ${likes.length}</button>
           <button class="comment-btn">💬 ${comments.length}</button>
           <small style="float:right;color:#888;">📅 ${time}</small>
         </div>
-
         <div class="comment-box hidden">
           <input type="text" class="comment-input" maxlength="200" placeholder="Tulis komentar..." />
           <button class="send-comment">Kirim</button>
           <div class="comment-list">
-            ${sortedComments
-              .map(
-                (c) => {
-                  // Cek apakah user yang sedang login adalah pemilik komentar
-                  const isCommentOwner = auth.currentUser?.email === c.userEmail;
-                  return `
-                    <p class="comment-item fade-in">
-                      <b>${c.user}</b>: <span class="comment-text">${c.text}</span>
-                      ${isCommentOwner
-                          ? `<span class="comment-actions">
-                              <button class="edit-comment" title="Edit">✏️</button>
-                              <button class="delete-comment" title="Hapus">🗑️</button>
-                            </span>`
-                          : ""
-                      }
-                      <br><small style="color:#888;">🕒 ${c.time || ""}</small>
-                    </p>
-                  `;
-                }
-              )
-              .join("")}
+            ${sortedComments.map((c) => {
+              const isCommentOwner = auth.currentUser?.email === c.userEmail;
+              return `<p class="comment-item fade-in"><b>${c.user}</b>: <span class="comment-text">${c.text}</span>${
+                isCommentOwner ? `<span class="comment-actions"><button class="edit-comment">✏️</button><button class="delete-comment">🗑️</button></span>` : ""
+              }<br><small style="color:#888;">🕒 ${c.time || ""}</small></p>`;
+            }).join("")}
           </div>
         </div>
-      </div>
-    `;
-
+      </div>`;
     postList.insertAdjacentHTML("beforeend", postHTML);
   });
 
-  // ==============================
-  // ❤️ LIKE & 💬 KOMENTAR (Buka/Tutup)
-  // ==============================
   const likeBtns = document.querySelectorAll(".like-btn");
   likeBtns.forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -303,15 +236,9 @@ function renderPosts(snapshot, postList) {
       const postRef = doc(db, "posts", postId);
       const userEmail = auth.currentUser?.email;
       if (!userEmail) return showToast("Login dulu untuk menyukai postingan!");
-
       const isLiked = btn.classList.contains("liked");
-      btn.classList.add("pop");
-      setTimeout(() => btn.classList.remove("pop"), 250);
-
       try {
-        await updateDoc(postRef, {
-          likes: isLiked ? arrayRemove(userEmail) : arrayUnion(userEmail),
-        });
+        await updateDoc(postRef, { likes: isLiked ? arrayRemove(userEmail) : arrayUnion(userEmail) });
       } catch (err) {
         console.error("❌ Gagal update like:", err);
       }
@@ -326,9 +253,6 @@ function renderPosts(snapshot, postList) {
     });
   });
 
-  // ==============================
-  // 💬 KIRIM KOMENTAR BARU
-  // ==============================
   const sendBtns = document.querySelectorAll(".send-comment");
   sendBtns.forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -337,47 +261,19 @@ function renderPosts(snapshot, postList) {
       const input = postCard.querySelector(".comment-input");
       const text = input.value.trim();
       if (!text) return showToast("Komentar tidak boleh kosong!");
-      if (text.length > 200) return showToast("Komentar terlalu panjang!");
-
-      const now = new Date();
-      const userEmail = auth.currentUser?.email; // Ambil email user untuk identifikasi kepemilikan
+      const userEmail = auth.currentUser?.email;
       if (!userEmail) return showToast("Login dulu untuk berkomentar!");
-
+      const now = new Date();
       const comment = {
-        user:
-          auth.currentUser?.displayName ||
-          auth.currentUser?.email ||
-          "Anonim",
-        userEmail: userEmail, // Simpan email user untuk fitur edit/hapus
+        id: now.getTime(),
+        user: auth.currentUser?.displayName || userEmail,
+        userEmail,
         text,
-        time: now.toLocaleString("id-ID", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        time: now.toLocaleString("id-ID"),
       };
-
       try {
         const postRef = doc(db, "posts", postId);
-        await updateDoc(postRef, {
-          comments: arrayUnion(comment),
-        });
-
-        const commentList = postCard.querySelector(".comment-list");
-        const newComment = document.createElement("p");
-        newComment.className = "comment-item fade-in";
-        // Tambahkan tombol edit/hapus ke komentar baru
-        newComment.innerHTML = `
-          <b>${comment.user}</b>: <span class="comment-text">${comment.text}</span>
-          <span class="comment-actions">
-            <button class="edit-comment" title="Edit">✏️</button>
-            <button class="delete-comment" title="Hapus">🗑️</button>
-          </span>
-          <br><small style="color:#888;">🕒 ${comment.time}</small>
-        `;
-        commentList.prepend(newComment); // Tampilkan komentar baru di paling atas
+        await updateDoc(postRef, { comments: arrayUnion(comment) });
         input.value = "";
         showToast("💬 Komentar terkirim!");
       } catch (err) {
@@ -386,137 +282,55 @@ function renderPosts(snapshot, postList) {
     });
   });
 
-  // ==============================
-  // ✏️ EDIT & 🗑️ HAPUS POSTING
-  // ==============================
-  const editBtns = document.querySelectorAll(".edit-post-btn");
-  const deleteBtns = document.querySelectorAll(".delete-post-btn");
-
-  // ✏️ Edit teks posting
-  editBtns.forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const postCard = btn.closest(".post-card");
-      const postId = postCard.dataset.id;
-      const oldText = postCard.querySelector(".post-text").innerText;
-      const newText = prompt("Ubah isi posting:", oldText);
-      if (newText === null || newText.trim() === "") return;
-
-      try {
-        await updateDoc(doc(db, "posts", postId), { text: newText.trim() });
-        postCard.querySelector(".post-text").innerText = newText.trim();
-        showToast("✅ Postingan berhasil diperbarui!");
-      } catch (err) {
-        console.error("❌ Gagal update posting:", err);
-      }
-    });
-  });
-
-  // 🗑️ Hapus posting
-  deleteBtns.forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const postCard = btn.closest(".post-card");
-      const postId = postCard.dataset.id;
-
-      if (!confirm("Yakin mau hapus posting ini?")) return;
-
-      try {
-        await deleteDoc(doc(db, "posts", postId));
-        postCard.remove();
-        showToast("🗑️ Postingan berhasil dihapus!");
-      } catch (err) {
-        console.error("❌ Gagal hapus posting:", err);
-        showToast("❌ Gagal hapus posting: " + err.message);
-      }
-    });
-  });
-
-// ==============================
-// ✏️ EDIT & 🗑️ HAPUS KOMENTAR (DARI div.txt)
-// ==============================
-
-// Cegah event listener dobel (penting!)
-if (!postList.dataset.listenerAdded) {
-  postList.dataset.listenerAdded = "true";
-
-  postList.addEventListener("click", async (e) => {
-    const target = e.target;
-    const postCard = target.closest(".post-card");
-    if (!postCard) return;
-    
-    const postId = postCard.dataset.id;
-    const postRef = doc(db, "posts", postId);
-    const userEmail = auth.currentUser?.email;
-
-    if (!userEmail) return showToast("Login dulu untuk mengelola komentar!");
-  
+  if (!postList.dataset.listenerAdded) {
+    postList.dataset.listenerAdded = "true";
+    postList.addEventListener("click", async (e) => {
       const target = e.target;
-    const postCard = target.closest(".post-card");
-    if (!postCard) return; // Pastikan kita berada di dalam post-card
-    
-    const postId = postCard.dataset.id;
-    const postRef = doc(db, "posts", postId);
-    const userEmail = auth.currentUser?.email;
+      const postCard = target.closest(".post-card");
+      if (!postCard) return;
+      const postId = postCard.dataset.id;
+      const postRef = doc(db, "posts", postId);
+      const userEmail = auth.currentUser?.email;
+      if (!userEmail) return showToast("Login dulu untuk mengelola komentar!");
 
-    if (!userEmail) return showToast("Login dulu untuk mengelola komentar!");
-
-    // EDIT KOMENTAR
-    if (target.classList.contains("edit-comment")) {
-      const commentItem = target.closest(".comment-item");
-      const commentTextElement = commentItem.querySelector(".comment-text");
-      const oldText = commentTextElement.textContent;
-      const newText = prompt("Ubah komentar:", oldText);
-   
-      if (!newText || newText.trim() === oldText) return;
-
-      try {
-        const snap = await getDoc(postRef);
-        const data = snap.data();
-        
-        // Cari dan perbarui komentar yang sesuai
-        const updatedComments = data.comments.map((c) =>
-          // Cek berdasarkan userEmail dan teks lama untuk memastikan komentar yang benar
-          c.userEmail === userEmail && c.text === oldText
-            ? { ...c, text: newText.trim() }
-            : c
-        );
-        
-        await updateDoc(postRef, { comments: updatedComments });
-        commentTextElement.textContent = newText.trim();
-        showToast("✅ Komentar diperbarui!");
-      } catch (err) {
-        console.error("❌ Gagal edit komentar:", err);
+      if (target.classList.contains("edit-comment")) {
+        const commentItem = target.closest(".comment-item");
+        const commentTextElement = commentItem.querySelector(".comment-text");
+        const oldText = commentTextElement.textContent;
+        const newText = prompt("Ubah komentar:", oldText);
+        if (!newText || newText.trim() === oldText) return;
+        try {
+          const snap = await getDoc(postRef);
+          const data = snap.data();
+          const updatedComments = data.comments.map((c) =>
+            c.userEmail === userEmail && c.text === oldText ? { ...c, text: newText.trim() } : c
+          );
+          await updateDoc(postRef, { comments: updatedComments });
+          commentTextElement.textContent = newText.trim();
+          showToast("✅ Komentar diperbarui!");
+        } catch (err) {
+          console.error("❌ Gagal edit komentar:", err);
+        }
       }
-    }
 
-    // HAPUS KOMENTAR
-    if (target.classList.contains("delete-comment")) {
-      if (!confirm("Yakin mau hapus komentar ini?")) return;
-      
-      const commentItem = target.closest(".comment-item");
-      const textToDelete = commentItem.querySelector(".comment-text").textContent;
-
-      try {
-        const snap = await getDoc(postRef);
-        const data = snap.data();
-        
-        // Filter komentar yang akan dihapus
-        const updatedComments = data.comments.filter(
-          // Hapus komentar yang sesuai berdasarkan userEmail dan teksnya
-          (c) => !(c.userEmail === userEmail && c.text === textToDelete)
-        );
-        
-        await updateDoc(postRef, { comments: updatedComments });
-        commentItem.remove();
-        showToast("🗑️ Komentar dihapus!");
-      } catch (err) {
-        console.error("❌ Gagal hapus komentar:", err);
-        showToast("❌ Gagal hapus komentar!");
+      if (target.classList.contains("delete-comment")) {
+        if (!confirm("Yakin mau hapus komentar ini?")) return;
+        const commentItem = target.closest(".comment-item");
+        const textToDelete = commentItem.querySelector(".comment-text").textContent;
+        try {
+          const snap = await getDoc(postRef);
+          const data = snap.data();
+          const updatedComments = data.comments.filter((c) => !(c.userEmail === userEmail && c.text === textToDelete));
+          await updateDoc(postRef, { comments: updatedComments });
+          commentItem.remove();
+          showToast("🗑️ Komentar dihapus!");
+        } catch (err) {
+          console.error("❌ Gagal hapus komentar:", err);
+        }
       }
-    }
-  });
+    });
+  }
 }
-}          
-
 
 // ==============================
 // ➕ HALAMAN POST
@@ -527,16 +341,13 @@ function loadPostPage() {
   const uploadBtn = document.getElementById("uploadBtn");
   const uploadMsg = document.getElementById("uploadMsg");
   const previewBox = document.getElementById("previewBox");
-
   if (!postText || !postImage || !uploadBtn) return;
 
   postImage.addEventListener("change", () => {
     const file = postImage.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = e => {
-      previewBox.innerHTML = `<img src="${e.target.result}" alt="preview">`;
-    };
+    reader.onload = e => { previewBox.innerHTML = `<img src="${e.target.result}" alt="preview">`; };
     reader.readAsDataURL(file);
   });
 
@@ -544,41 +355,29 @@ function loadPostPage() {
     const text = postText.value.trim();
     const file = postImage.files[0];
     const user = auth.currentUser;
-
     if (!text && !file) {
       uploadMsg.textContent = "❗ Harap isi teks atau upload gambar.";
       return;
     }
-
     uploadMsg.textContent = "⏳ Mengupload...";
-
     try {
       let imageUrl = "";
-
       if (file) {
         const data = new FormData();
         data.append("file", file);
         data.append("upload_preset", "forumjb");
-        data.append("cloud_name", "dvjfrrusn");
-
-        const res = await fetch("https://api.cloudinary.com/v1_1/dvjfrrusn/image/upload", {
-          method: "POST",
-          body: data
-        });
-
+        const res = await fetch("https://api.cloudinary.com/v1_1/dvjfrrusn/image/upload", { method: "POST", body: data });
         const json = await res.json();
         imageUrl = json.secure_url || "";
       }
-
       await addDoc(collection(db, "posts"), {
-  user: user ? user.email : "Anonim",
-  userDisplay: user?.displayName || user?.email || "Anonim",
-  userPhoto: user?.photoURL || "assets/icons/profile.png",
-  text,
-  image: imageUrl,
-  createdAt: serverTimestamp()
-});
-
+        user: user ? user.email : "Anonim",
+        userDisplay: user?.displayName || user?.email || "Anonim",
+        userPhoto: user?.photoURL || "assets/icons/profile.png",
+        text,
+        image: imageUrl,
+        createdAt: serverTimestamp()
+      });
       uploadMsg.textContent = "✅ Postingan berhasil disimpan!";
       postText.value = "";
       postImage.value = "";
@@ -595,16 +394,14 @@ function loadPostPage() {
 // ==============================
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    console.log("👤 Login terdeteksi:", user.email);
     loadPage("home");
   } else {
-    console.log("🚪 Belum login, arahkan ke halaman auth...");
     loadPage("auth");
   }
 });
 
 // ==============================
-// 🔔 Fungsi Notifikasi Visual (Toast)
+// 🔔 TOAST NOTIF
 // ==============================
 function showToast(message) {
   const toast = document.createElement("div");
@@ -617,4 +414,5 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 600);
   }, 1500);
 }
-console.log("✅ app.js selesai dimuat");
+
+console.log("✅ app.js versi fix selesai dimuat");
