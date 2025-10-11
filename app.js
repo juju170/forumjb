@@ -289,11 +289,137 @@ function renderPosts(snapshot, postList) {
         console.error("❌ Gagal update like:", err);
       }
 
-      setTimeout(() => btn.classList.remove("pop"), 250); // hapus efek setelah 0.25s
+// ==============================
+// 🌟 FUNGSI RENDER POSTINGAN (FINAL STABIL)
+// ==============================
+function renderPosts(snapshot, postList) {
+  if (!postList) return;
+
+  // Kalau belum ada postingan
+  if (snapshot.empty) {
+    postList.innerHTML = `
+      <p style="text-align:center;color:#777;margin-top:40px;">
+        Belum ada postingan 😢
+      </p>`;
+    return;
+  }
+
+  postList.innerHTML = "";
+
+  snapshot.forEach((docSnap) => {
+    const data = docSnap.data();
+    const postId = docSnap.id;
+
+    // 🧩 Ambil data user & postingan
+    const user =
+      data.userDisplay ||
+      auth.currentUser?.displayName ||
+      data.user ||
+      "Anonim";
+    const photo = data.userPhoto || "assets/icons/profile.png";
+    const text = data.text || "";
+    const image = data.image || "";
+    const likes = data.likes || [];
+    const comments = data.comments || [];
+    const isLiked = likes.includes(auth.currentUser?.email);
+
+    // 🕓 Format waktu Indonesia
+    const time = data.createdAt
+      ? new Date(data.createdAt.seconds * 1000).toLocaleString("id-ID", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "Baru saja";
+
+    // 🔄 Urutkan komentar terbaru di atas
+    const sortedComments = [...comments].sort(
+      (a, b) =>
+        new Date(b.time || 0).getTime() - new Date(a.time || 0).getTime()
+    );
+
+    // 🧱 Struktur HTML postingan
+    const postHTML = `
+      <div class="post-card fade-in" data-id="${postId}">
+        <div class="post-header">
+          <img src="${photo}" alt="User" class="post-avatar" />
+          <div class="post-author">${user}</div>
+        </div>
+
+        <p class="post-text">${text}</p>
+
+        ${
+          image
+            ? `<img src="${image}" alt="gambar" class="post-img" loading="lazy" />`
+            : ""
+        }
+
+        <div class="post-footer">
+          <button class="like-btn ${isLiked ? "liked" : ""}">
+            ❤️ ${likes.length}
+          </button>
+          <button class="comment-btn">
+            💬 ${comments.length}
+          </button>
+          <small style="float:right;color:#888;">📅 ${time}</small>
+        </div>
+
+        <div class="comment-box hidden">
+          <input type="text" class="comment-input" maxlength="200" placeholder="Tulis komentar (maks 200 karakter)..." />
+          <button class="send-comment">Kirim</button>
+          <div class="comment-list">
+            ${sortedComments
+              .map(
+                (c) => `
+                  <p class="comment-item fade-in">
+                    <b>${c.user}</b>: ${c.text}<br>
+                    <small style="color:#888;">🕒 ${c.time || ""}</small>
+                  </p>
+                `
+              )
+              .join("")}
+          </div>
+        </div>
+      </div>
+    `;
+
+    postList.insertAdjacentHTML("beforeend", postHTML);
+  });
+
+  // ==============================
+  // ❤️ SISTEM LIKE
+  // ==============================
+  const likeBtns = document.querySelectorAll(".like-btn");
+  likeBtns.forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const postCard = btn.closest(".post-card");
+      const postId = postCard.dataset.id;
+      const postRef = doc(db, "posts", postId);
+      const userEmail = auth.currentUser?.email;
+      if (!userEmail) return alert("Login dulu untuk menyukai postingan!");
+
+      const isLiked = btn.classList.contains("liked");
+
+      // Efek kecil saat di-like
+      btn.classList.add("pop");
+      setTimeout(() => btn.classList.remove("pop"), 250);
+
+      try {
+        await updateDoc(postRef, {
+          likes: isLiked ? arrayRemove(userEmail) : arrayUnion(userEmail),
+        });
+      } catch (err) {
+        console.error("❌ Gagal update like:", err);
+      }
     });
   });
 
-  // 💬 Tampilkan / sembunyikan kolom komentar
+  // ==============================
+  // 💬 SISTEM KOMENTAR
+  // ==============================
+  const commentBtns = document.querySelectorAll(".comment-btn");
   commentBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
       const box = btn.closest(".post-card").querySelector(".comment-box");
@@ -301,15 +427,17 @@ function renderPosts(snapshot, postList) {
     });
   });
 
-  // ✍️ Kirim komentar baru
+  const sendBtns = document.querySelectorAll(".send-comment");
   sendBtns.forEach((btn) => {
     btn.addEventListener("click", async () => {
       const postCard = btn.closest(".post-card");
       const postId = postCard.dataset.id;
       const input = postCard.querySelector(".comment-input");
       const text = input.value.trim();
+
       if (!text) return alert("Komentar tidak boleh kosong!");
-      if (text.length > 200) return alert("Komentar terlalu panjang (maks 200 karakter)!");
+      if (text.length > 200)
+        return alert("Komentar terlalu panjang (maks 200 karakter)!");
 
       const now = new Date();
       const comment = {
@@ -332,12 +460,12 @@ function renderPosts(snapshot, postList) {
           comments: arrayUnion(comment),
         });
 
-        // 🔥 Langsung tampil di bawah tanpa reload
+        // 🔥 Tambahkan komentar langsung tanpa reload
         const commentList = postCard.querySelector(".comment-list");
         const newComment = document.createElement("p");
         newComment.className = "comment-item fade-in";
         newComment.innerHTML = `<b>${comment.user}</b>: ${comment.text}<br><small style="color:#888;">🕒 ${comment.time}</small>`;
-        commentList.prepend(newComment); // komentar baru di atas
+        commentList.prepend(newComment);
 
         input.value = "";
       } catch (err) {
