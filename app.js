@@ -130,7 +130,7 @@ function showUserProfile(user) {
     logoutBtn.addEventListener("click", async () => {
       try {
         await signOut(auth);
-        alert("Anda telah keluar.");
+        showToast("Anda telah keluar.");
         window.location.href = "pages/auth.html";
       } catch (e) {
         console.error("❌ Gagal logout:", e);
@@ -289,7 +289,7 @@ function renderPosts(snapshot, postList) {
       const postId = postCard.dataset.id;
       const postRef = doc(db, "posts", postId);
       const userEmail = auth.currentUser?.email;
-      if (!userEmail) return alert("Login dulu untuk menyukai postingan!");
+      if (!userEmail) return showToast("Login dulu untuk menyukai postingan!");
 
       const isLiked = btn.classList.contains("liked");
       btn.classList.add("pop");
@@ -320,8 +320,8 @@ function renderPosts(snapshot, postList) {
       const postId = postCard.dataset.id;
       const input = postCard.querySelector(".comment-input");
       const text = input.value.trim();
-      if (!text) return alert("Komentar tidak boleh kosong!");
-      if (text.length > 200) return alert("Komentar terlalu panjang!");
+      if (!text) return showToast("Komentar tidak boleh kosong!");
+      if (text.length > 200) return showToast("Komentar terlalu panjang!");
 
       const now = new Date();
       const comment = {
@@ -374,7 +374,7 @@ function renderPosts(snapshot, postList) {
       try {
         await updateDoc(doc(db, "posts", postId), { text: newText.trim() });
         postCard.querySelector(".post-text").innerText = newText.trim();
-        alert("✅ Postingan berhasil diperbarui!");
+        showToast("✅ Postingan berhasil diperbarui!");
       } catch (err) {
         console.error("❌ Gagal update posting:", err);
       }
@@ -392,7 +392,7 @@ function renderPosts(snapshot, postList) {
       try {
         await deleteDoc(doc(db, "posts", postId));
         postCard.remove();
-        alert("🗑️ Postingan berhasil dihapus!");
+        showToast("🗑️ Postingan berhasil dihapus!");
       } catch (err) {
         console.error("❌ Gagal hapus posting:", err);
       }
@@ -485,4 +485,18 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
+// ==============================
+// 🔔 Fungsi Notifikasi Visual (Toast)
+// ==============================
+function showToast(message) {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translate(-50%, 20px)";
+    setTimeout(() => toast.remove(), 600);
+  }, 1500);
+}
 console.log("✅ app.js selesai dimuat");
