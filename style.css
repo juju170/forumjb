@@ -237,8 +237,8 @@ main {
 .post-img {
   width: 100%;
   height: auto;
-  max-height: 400px;
-  object-fit: cover;
+  max-height: 380px;
+  object-fit: contain; /* ubah dari cover ke contain */
   border-radius: 12px;
   display: block;
   margin: 0 auto;
