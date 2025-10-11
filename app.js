@@ -228,6 +228,50 @@ function renderPosts(snapshot, postList) {
     postList.insertAdjacentHTML("beforeend", postHTML);
   });
 
+  // ==============================
+// ✏️ EDIT & 🗑️ HAPUS POSTING
+// ==============================
+const editBtns = document.querySelectorAll(".edit-post-btn");
+const deleteBtns = document.querySelectorAll(".delete-post-btn");
+
+// ✏️ Edit teks posting
+editBtns.forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const postCard = btn.closest(".post-card");
+    const postId = postCard.dataset.id;
+    const oldText = postCard.querySelector(".post-text").innerText;
+    const newText = prompt("Ubah isi posting:", oldText);
+    if (newText === null || newText.trim() === "") return;
+
+    try {
+      await updateDoc(doc(db, "posts", postId), { text: newText.trim() });
+      postCard.querySelector(".post-text").innerText = newText.trim();
+      showToast("✅ Postingan berhasil diperbarui!");
+    } catch (err) {
+      console.error("❌ Gagal update posting:", err);
+    }
+  });
+});
+
+// 🗑️ Hapus posting
+deleteBtns.forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const postCard = btn.closest(".post-card");
+    const postId = postCard.dataset.id;
+
+    if (!confirm("Yakin mau hapus posting ini?")) return;
+
+    try {
+      await deleteDoc(doc(db, "posts", postId));
+      postCard.remove();
+      showToast("🗑️ Postingan berhasil dihapus!");
+    } catch (err) {
+      console.error("❌ Gagal hapus posting:", err);
+      showToast("❌ Gagal hapus posting: " + err.message);
+    }
+  });
+});
+
   const likeBtns = document.querySelectorAll(".like-btn");
   likeBtns.forEach((btn) => {
     btn.addEventListener("click", async () => {
