@@ -400,7 +400,7 @@ function renderPosts(snapshot, postList) {
     }
   });
 });
-
+}
 // ==============================
 // ➕ HALAMAN POST
 // ==============================
