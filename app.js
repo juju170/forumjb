@@ -258,16 +258,26 @@ reportBtns.forEach((btn) => {
     const postCard = btn.closest(".post-card");
     const postId = postCard.dataset.id;
     if (!confirm("Laporkan posting ini? (gunakan jika konten tidak pantas)")) return;
+
     const alasan = prompt("Tulis alasan laporan (misal: menipu, tidak sopan):");
     if (!alasan || alasan.trim() === "") return showToast("⚠️ Alasan tidak boleh kosong!");
 
     try {
+      // 🔹 Ambil data postingan dari Firestore biar kita tahu URL gambarnya
+      const postRef = doc(db, "posts", postId);
+      const postSnap = await getDoc(postRef);
+      const postData = postSnap.exists() ? postSnap.data() : {};
+
+      // 🔹 Kirim laporan lengkap (termasuk gambar)
       await addDoc(collection(db, "reports"), {
         postId,
         reporter: auth.currentUser?.email || "Anonim",
         reason: alasan.trim(),
+        image: postData.image || null,   // ✅ simpan URL gambar biar muncul di reports.html
+        text: postData.text || "",       // (opsional) simpan teks biar admin lebih tahu konteks
         time: new Date().toISOString(),
       });
+
       showToast("🚨 Laporan terkirim ke admin!");
     } catch (err) {
       console.error("❌ Gagal kirim laporan:", err);
