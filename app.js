@@ -280,10 +280,17 @@ function renderPosts(snapshot, postList) {
       const text = input.value.trim();
       if (!text) return;
 
-      const comment = {
+      const now = new Date();
+const comment = {
   user: auth.currentUser?.email || "Anonim",
   text,
-  time: new Date().toLocaleString(), // ✅ pakai waktu lokal agar valid
+  time: now.toLocaleString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }),
 };
 
 try {
