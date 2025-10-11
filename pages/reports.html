@@ -1,25 +1,100 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Laporan Warga 🚨</title>
   <link rel="stylesheet" href="../style.css" />
+  <style>
+    .admin-container {
+      padding: 16px;
+      max-width: 850px;
+      margin: auto;
+    }
+
+    .report-actions {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .ignore-btn, .delete-btn {
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+
+    .ignore-btn { background: #1976d2; }
+    .delete-btn { background: #d32f2f; }
+
+    .ignore-btn:hover, .delete-btn:hover {
+      transform: scale(1.03);
+      opacity: 0.9;
+    }
+
+    .report-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .report-card {
+      border: 1px solid #ccc;
+      background: #fafafa;
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .report-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .report-info {
+      flex: 1;
+    }
+
+    .report-info p {
+      margin: 4px 0;
+      font-size: 14px;
+    }
+
+    .select-report {
+      margin-right: 10px;
+      transform: scale(1.2);
+      accent-color: #1976d2;
+    }
+  </style>
 </head>
 <body>
   <main class="admin-container">
     <h2>🚨 Daftar Laporan Warga</h2>
-    <p style="color:#666;">Berikut laporan yang dikirim oleh warga terhadap postingan.</p>
+    <p style="color:#666;">Pilih laporan, lalu pilih tindakan di bawah ini:</p>
+
+    <div class="report-actions">
+      <button id="ignoreSelected" class="ignore-btn">🙈 Abaikan</button>
+      <button id="deletePosts" class="delete-btn">🔥 Hapus Postingan</button>
+    </div>
+
     <div id="reportList" class="report-list">
-      <p>Memuat laporan...</p>
+      <p>📂 Memuat laporan...</p>
     </div>
   </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { 
+      getFirestore, collection, getDocs, deleteDoc, doc 
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // ⚙️ Config Firebase kamu (copy dari app.js)
+    // 🔥 GANTI DENGAN CONFIG KAMU
     const firebaseConfig = {
       apiKey: "AIzaSyC8uiIvWOZPcSZOzCGnlRMA7WJ7TIQfy5s",
     authDomain: "tts-indonesia-bf14e.firebaseapp.com",
@@ -32,11 +107,14 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
     const reportList = document.getElementById("reportList");
 
+    // ==============================
+    // 📋 MUAT SEMUA LAPORAN
+    // ==============================
     async function loadReports() {
       reportList.innerHTML = "<p>📂 Mengambil data laporan...</p>";
+
       const snapshot = await getDocs(collection(db, "reports"));
       if (snapshot.empty) {
         reportList.innerHTML = "<p style='color:#999;'>Belum ada laporan.</p>";
@@ -51,27 +129,70 @@
         const card = document.createElement("div");
         card.classList.add("report-card");
         card.innerHTML = `
-          <div class="report-info">
-            <p><b>📄 Post ID:</b> ${data.postId}</p>
-            <p><b>👤 Pelapor:</b> ${data.reporter}</p>
-            <p><b>🗒️ Alasan:</b> ${data.reason}</p>
-            <p><b>🕒 Waktu:</b> ${new Date(data.time).toLocaleString("id-ID")}</p>
+          <div class="report-header">
+            <input type="checkbox" class="select-report" data-id="${id}" data-post="${data.postId}" />
+            <div class="report-info">
+              <p><b>📄 Post ID:</b> ${data.postId}</p>
+              <p><b>👤 Pelapor:</b> ${data.reporter}</p>
+              <p><b>🗒️ Alasan:</b> ${data.reason}</p>
+              <p><b>🕒 Waktu:</b> ${new Date(data.time).toLocaleString("id-ID")}</p>
+            </div>
           </div>
-          <button class="delete-report">Hapus</button>
         `;
-
-        card.querySelector(".delete-report").addEventListener("click", async () => {
-          if (!confirm("Yakin mau hapus laporan ini?")) return;
-          await deleteDoc(doc(db, "reports", id));
-          card.remove();
-          alert("✅ Laporan dihapus!");
-        });
 
         reportList.appendChild(card);
       });
     }
 
     loadReports();
+
+    // ==============================
+    // 🙈 ABAIKAN (HAPUS LAPORAN SAJA)
+    // ==============================
+    document.getElementById("ignoreSelected").addEventListener("click", async () => {
+      const selected = Array.from(document.querySelectorAll(".select-report:checked"));
+      if (selected.length === 0) return alert("⚠️ Pilih minimal satu laporan dulu!");
+      if (!confirm(`Abaikan ${selected.length} laporan terpilih? (Posting tetap ada)`)) return;
+
+      try {
+        const deletions = selected.map((el) => deleteDoc(doc(db, "reports", el.dataset.id)));
+        await Promise.all(deletions);
+        selected.forEach((el) => el.closest(".report-card").remove());
+        alert(`✅ ${selected.length} laporan berhasil dihapus (posting tetap ada).`);
+      } catch (err) {
+        console.error("❌ Gagal hapus laporan:", err);
+        alert("❌ Terjadi kesalahan saat menghapus laporan.");
+      }
+    });
+
+    // ==============================
+    // 🔥 HAPUS POSTINGAN + LAPORANNYA SEKALIGUS
+    // ==============================
+    document.getElementById("deletePosts").addEventListener("click", async () => {
+      const selected = Array.from(document.querySelectorAll(".select-report:checked"));
+      if (selected.length === 0) return alert("⚠️ Pilih minimal satu laporan dulu!");
+      if (!confirm(`⚠️ Hapus ${selected.length} postingan yang dilaporkan?`)) return;
+
+      try {
+        // Ambil ID posting unik
+        const postIds = [...new Set(selected.map((el) => el.dataset.post))];
+        
+        // Hapus postingan dari koleksi posts
+        const postDeletions = postIds.map((pid) => deleteDoc(doc(db, "posts", pid)));
+        await Promise.all(postDeletions);
+
+        // Hapus laporan terkait
+        const reportDeletions = selected.map((el) => deleteDoc(doc(db, "reports", el.dataset.id)));
+        await Promise.all(reportDeletions);
+
+        // Hapus tampilan dari UI
+        selected.forEach((el) => el.closest(".report-card").remove());
+        alert(`🔥 ${selected.length} laporan & postingan terkait berhasil dihapus.`);
+      } catch (err) {
+        console.error("❌ Gagal hapus postingan dan laporan:", err);
+        alert("❌ Terjadi kesalahan saat menghapus postingan.");
+      }
+    });
   </script>
 </body>
 </html>
