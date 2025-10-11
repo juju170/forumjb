@@ -199,33 +199,35 @@
     // 🧱 RENDER LAPORAN
     // ==============================
     function renderReports(reports) {
-      reportList.innerHTML = "";
-      let count = 0;
+  reportList.innerHTML = "";
+  let count = 0;
 
-      reports.forEach((data) => {
-        const card = document.createElement("div");
-        card.classList.add("report-card");
+  reports.forEach((data) => {
+    const card = document.createElement("div");
+    card.classList.add("report-card");
 
-        const imgPreview = data.image 
-          ? `<img src="${data.image}" alt="Gambar Postingan" class="report-img" />`
-          : `<div class="report-img" style="background:#eee;display:flex;align-items:center;justify-content:center;">🖼️</div>`;
+    // 🔹 gambar kecil, kalau tidak ada tampil placeholder abu-abu
+    const imgPreview = data.image
+      ? `<img src="${data.image}" alt="Gambar Postingan" class="report-img" 
+           onerror="this.src='https://via.placeholder.com/100?text=No+Image';" />`
+      : `<div class="report-img" style="background:#eee;display:flex;align-items:center;justify-content:center;">🖼️</div>`;
 
-        card.innerHTML = `
-          <input type="checkbox" class="select-report" data-id="${data.id}" data-post="${data.postId}" />
-          ${imgPreview}
-          <div class="report-info">
-            <p><b>📄 Post ID:</b> ${data.postId}</p>
-            <p><b>👤 Pelapor:</b> ${data.reporter}</p>
-            <p><b>🗒️ Alasan:</b> ${data.reason}</p>
-            <p><b>🕒 Waktu:</b> ${new Date(data.time).toLocaleString("id-ID")}</p>
-          </div>
-        `;
-        reportList.appendChild(card);
-        count++;
-      });
+    card.innerHTML = `
+      <input type="checkbox" class="select-report" data-id="${data.id}" data-post="${data.postId}" />
+      ${imgPreview}
+      <div class="report-info">
+        <p><b>📄 Post ID:</b> ${data.postId}</p>
+        <p><b>👤 Pelapor:</b> ${data.reporter}</p>
+        <p><b>🗒️ Alasan:</b> ${data.reason}</p>
+        <p><b>🕒 Waktu:</b> ${new Date(data.time).toLocaleString("id-ID")}</p>
+      </div>
+    `;
+    reportList.appendChild(card);
+    count++;
+  });
 
-      reportCount.textContent = count;
-    }
+  reportCount.textContent = count;
+}
 
     // ==============================
     // 🔍 FITUR PENCARIAN
