@@ -3,11 +3,20 @@
 
   <div class="profile-box">
     <img src="../assets/icons/profile.png" alt="User Icon" class="profile-avatar">
+
     <p><strong>Email:</strong> <span id="userEmail">memuat...</span></p>
+
+    <!-- Tombol follow hanya muncul kalau buka profil orang lain -->
+    <button id="followBtn" class="follow-btn" style="display:none;">Ikuti</button>
 
     <div class="saldo-box">
       <p><strong>Saldo:</strong> Rp <span id="saldo">0</span></p>
       <p><strong>Hutang:</strong> Rp <span id="hutang">0</span></p>
+    </div>
+
+    <div class="follow-stats">
+      <p><strong>Mengikuti:</strong> <span id="followingCount">0</span></p>
+      <p><strong>Pengikut:</strong> <span id="followerCount">0</span></p>
     </div>
 
     <button id="logoutBtn" class="logout-btn">Keluar</button>
