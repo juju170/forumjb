@@ -600,3 +600,22 @@ button:active {
 .follow-stats p {
   margin: 4px 0;
 }
+
+.follow-inline-btn {
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.8em;
+  margin-left: auto;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.follow-inline-btn.following {
+  background: #ccc;
+  color: #333;
+}
+.follow-inline-btn:hover {
+  opacity: 0.9;
+}
