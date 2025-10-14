@@ -530,6 +530,7 @@ deleteBtns.forEach((btn) => {
         } catch (err) {
           console.error("❌ Gagal edit komentar:", err);
         }
+      }
       
 
       if (target.classList.contains("delete-comment")) {
