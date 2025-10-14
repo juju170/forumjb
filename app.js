@@ -551,6 +551,52 @@ deleteBtns.forEach((btn) => {
   }
 }
 
+async function setupInlineFollowButtons() {
+  const followBtns = document.querySelectorAll(".follow-inline-btn");
+
+  followBtns.forEach(async (btn) => {
+    const targetId = btn.dataset.userid;
+    const targetEmail = btn.dataset.email;
+    if (!auth.currentUser || auth.currentUser.uid === targetId) {
+      btn.style.display = "none";
+      return;
+    }
+
+    const followingRef = doc(db, "users", auth.currentUser.uid, "following", targetId);
+    const snap = await getDoc(followingRef);
+    let isFollowing = snap.exists();
+
+    function updateBtn() {
+      if (isFollowing) {
+        btn.textContent = "✅ Mengikuti";
+        btn.classList.add("following");
+      } else {
+        btn.textContent = "➕ Ikuti";
+        btn.classList.remove("following");
+      }
+    }
+
+    updateBtn();
+
+    btn.addEventListener("click", async () => {
+      try {
+        if (isFollowing) {
+          await deleteDoc(followingRef);
+          isFollowing = false;
+          showToast(`❎ Berhenti mengikuti ${targetEmail}`);
+        } else {
+          await setDoc(followingRef, { followedAt: Date.now() });
+          isFollowing = true;
+          showToast(`✅ Sekarang kamu mengikuti ${targetEmail}`);
+        }
+        updateBtn();
+      } catch (e) {
+        console.error("❌ Gagal ubah status follow:", e);
+      }
+    });
+  });
+}
+
 // ==============================
 // ➕ HALAMAN POST
 // ==============================
