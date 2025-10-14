@@ -778,6 +778,5 @@ async function loadProfilePage(profileUid = null) {
 
   // Jalankan fungsi follow/unfollow
   setupFollowButton(viewUid);
-}
 
 console.log("✅ app.js versi fix selesai dimuat");
