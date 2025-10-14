@@ -549,7 +549,6 @@ deleteBtns.forEach((btn) => {
       }
     });
   }
-}
 
 async function setupInlineFollowButtons() {
   const followBtns = document.querySelectorAll(".follow-inline-btn");
