@@ -261,7 +261,7 @@ async function loadPosts(filterType = "mengikuti") {
     console.error("❌ Gagal loadPosts:", err);
     postList.innerHTML = `<p style="text-align:center;color:#d00;">Gagal memuat postingan.</p>`;
   }
-}
+
 // ==============================
 // 🧩 RENDER POSTINGAN
 // ==============================
@@ -344,7 +344,7 @@ function renderPosts(snapshot, postList) {
 
   // 🔹 Jalankan fungsi follow di setiap posting
   setupInlineFollowButtons();
-}
+
 
 
   // ==============================
