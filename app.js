@@ -579,4 +579,107 @@ function showToast(message) {
   }, 1500);
 }
 
+// ==============================
+// 👥 SISTEM FOLLOW / UNFOLLOW
+// ==============================
+import {
+  doc, setDoc, deleteDoc, getDoc, getDocs, collection
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+// 🔹 Fungsi untuk setup tombol follow
+async function setupFollowButton(profileUid) {
+  const followBtn = document.getElementById("followBtn");
+  const userEmail = document.getElementById("userEmail");
+  const followingCount = document.getElementById("followingCount");
+  const followerCount = document.getElementById("followerCount");
+
+  // Pastikan login dulu
+  if (!auth.currentUser) return;
+
+  const currentUid = auth.currentUser.uid;
+
+  // Kalau profil sendiri → sembunyikan tombol
+  if (profileUid === currentUid) {
+    followBtn.style.display = "none";
+  } else {
+    followBtn.style.display = "inline-block";
+  }
+
+  // Referensi Firestore
+  const followingRef = doc(db, "users", currentUid, "following", profileUid);
+  const followerRef = doc(db, "users", profileUid, "followers", currentUid);
+
+  // Cek apakah sudah mengikuti
+  const snap = await getDoc(followingRef);
+  let isFollowing = snap.exists();
+
+  function updateButton() {
+    if (isFollowing) {
+      followBtn.textContent = "Berhenti Mengikuti";
+      followBtn.classList.add("following");
+    } else {
+      followBtn.textContent = "Ikuti";
+      followBtn.classList.remove("following");
+    }
+  }
+
+  updateButton();
+
+  // Event klik tombol
+  followBtn.addEventListener("click", async () => {
+    if (isFollowing) {
+      await deleteDoc(followingRef);
+      await deleteDoc(followerRef);
+      isFollowing = false;
+      showToast("❎ Berhenti mengikuti pengguna ini");
+    } else {
+      await setDoc(followingRef, { followedAt: Date.now() });
+      await setDoc(followerRef, { followedAt: Date.now() });
+      isFollowing = true;
+      showToast("✅ Sekarang kamu mengikuti pengguna ini!");
+    }
+    updateButton();
+    loadFollowStats(profileUid); // refresh jumlah pengikut
+  });
+
+  // Hitung pengikut dan yang diikuti
+  loadFollowStats(profileUid);
+}
+
+// 🔹 Fungsi menghitung pengikut & mengikuti
+async function loadFollowStats(profileUid) {
+  const followingSnap = await getDocs(collection(db, "users", profileUid, "following"));
+  const followerSnap = await getDocs(collection(db, "users", profileUid, "followers"));
+
+  document.getElementById("followingCount").textContent = followingSnap.size;
+  document.getElementById("followerCount").textContent = followerSnap.size;
+}
+
+// ==============================
+// 📄 LOAD HALAMAN PROFIL
+// ==============================
+async function loadProfilePage(profileUid = null) {
+  const userEmail = document.getElementById("userEmail");
+
+  if (!auth.currentUser) {
+    console.warn("Belum login");
+    loadPage("auth");
+    return;
+  }
+
+  const currentUser = auth.currentUser;
+  const viewUid = profileUid || currentUser.uid;
+
+  // Tampilkan email pengguna
+  if (viewUid === currentUser.uid) {
+    userEmail.textContent = currentUser.email;
+  } else {
+    const userDoc = await getDoc(doc(db, "users", viewUid));
+    userEmail.textContent = userDoc.exists() ? userDoc.data().email : "(Pengguna tidak ditemukan)";
+  }
+
+  // Jalankan fungsi follow/unfollow
+  setupFollowButton(viewUid);
+}
+
 console.log("✅ app.js versi fix selesai dimuat");
