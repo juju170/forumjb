@@ -142,54 +142,91 @@ function showUserProfile(user) {
 // ==============================
 // 🏠 HALAMAN BERANDA
 // ==============================
+// Pastikan kamu sudah meng-import getDocs, query, where, orderBy, collection kalau belum:
+// import { getDocs, query, where, orderBy, collection } from "...firebase-firestore.js";
+
 function loadHomePage() {
   const postList = document.getElementById("postList");
   const btnMengikuti = document.getElementById("btnMengikuti");
   const btnJelajahi = document.getElementById("btnJelajahi");
-  const btnMengikuti = document.getElementById("btnMengikuti");
-const btnJelajahi = document.getElementById("btnJelajahi");
-const jelajahiSelect = document.getElementById("jelajahiFilter");
+  const jelajahiSelect = document.getElementById("jelajahiFilter");
 
-btnMengikuti.addEventListener("click", () => {
-  btnMengikuti.classList.add("active");
-  btnJelajahi.classList.remove("active");
-  jelajahiSelect.style.display = "none";
-  loadPosts("mengikuti");
-});
-
-btnJelajahi.addEventListener("click", () => {
-  btnMengikuti.classList.remove("active");
-  btnJelajahi.classList.add("active");
-  jelajahiSelect.style.display = "inline-block";
-  loadPosts(jelajahiSelect.value);
-});
-
-jelajahiSelect.addEventListener("change", () => {
-  loadPosts(jelajahiSelect.value);
-});
-
+  // safety check
   if (!postList) {
     console.error("❌ Elemen #postList tidak ditemukan di halaman home.html");
     return;
   }
 
-  // ✅ Ambil postingan dari Firestore realtime
-  const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-  onSnapshot(q, (snapshot) => {
-    renderPosts(snapshot, postList);
-  });
-
-  if (btnMengikuti && btnJelajahi) {
+  // Pasang event filter (hanya jika elemen ada)
+  if (btnMengikuti && btnJelajahi && jelajahiSelect) {
+    // klik Mengikuti
     btnMengikuti.addEventListener("click", () => {
       btnMengikuti.classList.add("active");
       btnJelajahi.classList.remove("active");
+      jelajahiSelect.style.display = "none";
+      loadPosts("mengikuti");
     });
+
+    // klik Jelajahi
     btnJelajahi.addEventListener("click", () => {
-      btnJelajahi.classList.add("active");
       btnMengikuti.classList.remove("active");
+      btnJelajahi.classList.add("active");
+      jelajahiSelect.style.display = "inline-block";
+      loadPosts(jelajahiSelect.value || "terbaru");
+    });
+
+    // ganti subfilter Jelajahi
+    jelajahiSelect.addEventListener("change", () => {
+      loadPosts(jelajahiSelect.value);
     });
   }
-loadPosts("mengikuti");
+
+  // Jika kamu mau realtime feed global tetap aktif, bisa gunakan onSnapshot.
+  // Tapi di sini kita panggil loadPosts untuk load awal sesuai filter:
+  loadPosts("mengikuti");
+} // penutup loadHomePage()
+
+// =====================================
+// Fungsi loadPosts sederhana (ambil sekali, tampilkan hasil)
+// =====================================
+async function loadPosts(filterType = "mengikuti") {
+  const postList = document.getElementById("postList");
+  if (!postList) return;
+
+  postList.innerHTML = `<p style="text-align:center;color:#777;">⏳ Memuat postingan...</p>`;
+
+  try {
+    const postsRef = collection(db, "posts");
+    let q;
+
+    if (filterType === "mengikuti") {
+      // sementara: tampil semua terbaru (ikuti fitur follow nanti)
+      q = query(postsRef, orderBy("createdAt", "desc"));
+    } else if (filterType === "populer") {
+      // populer minggu ini: ambil posting dengan createdAt > 7 hari lalu lalu urut berdasarkan likesCount
+      const oneWeekAgoMs = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const oneWeekAgo = new Date(oneWeekAgoMs);
+      // Jika createdAt disimpan sebagai Timestamp Firestore, gunakan where dengan Timestamp
+      // Pastikan import Timestamp jika perlu: import { Timestamp } from "firebase-firestore.js"
+      q = query(postsRef, where("createdAt", ">", oneWeekAgo), orderBy("likesCount", "desc"));
+    } else {
+      // 'terbaru' atau fallback
+      q = query(postsRef, orderBy("createdAt", "desc"));
+    }
+
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      postList.innerHTML = `<p style="text-align:center;color:#777;">Belum ada postingan.</p>`;
+      return;
+    }
+
+    // renderPosts harus menerima (snapshot, postList) seperti implementasimu sebelumnya.
+    // Jika renderPosts berbeda, sesuaikan pemanggilan di bawah.
+    renderPosts(snapshot, postList);
+  } catch (err) {
+    console.error("❌ Gagal loadPosts:", err);
+    postList.innerHTML = `<p style="text-align:center;color:#d00;">Gagal memuat postingan.</p>`;
+  }
 }
 
 
