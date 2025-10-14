@@ -568,3 +568,35 @@ button:active {
   font-weight: 500;
   outline: none;
 }
+
+.follow-btn {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+  margin-top: 8px;
+}
+
+.follow-btn.following {
+  background: #ccc;
+  color: #333;
+}
+
+.follow-btn:hover {
+  opacity: 0.9;
+}
+
+.follow-stats {
+  margin-top: 10px;
+  text-align: center;
+  color: #444;
+  font-size: 0.9em;
+}
+
+.follow-stats p {
+  margin: 4px 0;
+}
