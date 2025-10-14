@@ -561,7 +561,7 @@ async function setupInlineFollowButtons() {
     if (!auth.currentUser || auth.currentUser.uid === targetId) {
       btn.style.display = "none";
       return;
-    
+    }
     const followingRef = doc(db, "users", auth.currentUser.uid, "following", targetId);
     const snap = await getDoc(followingRef);
     let isFollowing = snap.exists();
