@@ -14,6 +14,7 @@ import {
   getFirestore,
   collection,
   addDoc,
+  setDoc,
   serverTimestamp,
   query,
   orderBy,
@@ -27,7 +28,6 @@ import {
   getDocs,
   getDoc
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
 // 🧩 Konfigurasi Firebase kamu
 const firebaseConfig = {
   apiKey: "AIzaSyC8uiIvWOZPcSZOzCGnlRMA7WJ7TIQfy5s",
@@ -683,10 +683,6 @@ function showToast(message) {
 // ==============================
 // 👥 SISTEM FOLLOW / UNFOLLOW
 // ==============================
-import {
-  doc, setDoc, deleteDoc, getDoc, getDocs, collection
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
 // 🔹 Fungsi untuk setup tombol follow
 async function setupFollowButton(profileUid) {
   const followBtn = document.getElementById("followBtn");
