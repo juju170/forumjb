@@ -3,10 +3,19 @@
     <h2>Beranda Warga</h2>
 
     <div class="filter-box">
-      <button id="btnMengikuti" class="filter-btn active">Mengikuti</button>
-      <button id="btnJelajahi" class="filter-btn">Jelajahi</button>
-    </div>
-  </div>
+  <button id="btnMengikuti" class="filter-btn active">👥 Mengikuti</button>
+  <button id="btnJelajahi" class="filter-btn">🌍 Jelajahi</button>
+
+  <!-- 🔽 Tambahkan dropdown untuk subfilter Jelajahi -->
+  <select id="jelajahiFilter" class="jelajahi-select" style="display:none;">
+    <option value="terbaru">🕒 Terbaru</option>
+    <option value="populer">🔥 Populer Minggu Ini</option>
+  </select>
+</div>
+
+<div class="post-list" id="postList">
+  <!-- Postingan warga muncul di sini -->
+</div>
 
   <div class="post-list" id="postList">
     <!-- Postingan warga muncul di sini -->
