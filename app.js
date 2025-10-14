@@ -322,6 +322,7 @@ function renderPosts(snapshot, postList) {
 // ==============================
 // 🔗 SHARE POSTINGAN
 // ==============================
+function setupPostInteractions() {
 const shareBtns = document.querySelectorAll(".share-btn");
 shareBtns.forEach((btn) => {
   btn.addEventListener("click", async () => {
@@ -575,6 +576,8 @@ async function setupInlineFollowButtons() {
     });
   });
 }
+}
+setupPostInteractions();
 
 // ==============================
 // ➕ HALAMAN POST
