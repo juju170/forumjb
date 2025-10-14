@@ -530,7 +530,7 @@ deleteBtns.forEach((btn) => {
         } catch (err) {
           console.error("❌ Gagal edit komentar:", err);
         }
-      }
+      
 
       if (target.classList.contains("delete-comment")) {
         if (!confirm("Yakin mau hapus komentar ini?")) return;
@@ -549,6 +549,7 @@ deleteBtns.forEach((btn) => {
       }
     });
   }
+}
 
 async function setupInlineFollowButtons() {
   const followBtns = document.querySelectorAll(".follow-inline-btn");
