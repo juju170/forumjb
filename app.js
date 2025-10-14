@@ -24,6 +24,7 @@ import {
   deleteDoc,
   arrayUnion,
   arrayRemove,
+  getDocs,
   getDoc
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
