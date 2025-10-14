@@ -201,37 +201,67 @@ async function loadPosts(filterType = "mengikuti") {
     const postsRef = collection(db, "posts");
     let q;
 
+    // ==============================
+    // 🔹 FILTER: MENGIKUTI
+    // ==============================
     if (filterType === "mengikuti") {
-      // sementara: tampil semua terbaru (ikuti fitur follow nanti)
-      q = query(postsRef, orderBy("createdAt", "desc"));
-    } else if (filterType === "populer") {
-      // populer minggu ini: ambil posting dengan createdAt > 7 hari lalu lalu urut berdasarkan likesCount
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        postList.innerHTML = `<p style="text-align:center;color:#777;">🚫 Kamu belum login.</p>`;
+        return;
+      }
+
+      // Ambil daftar UID user yang diikuti
+      const followingSnap = await getDocs(collection(db, "users", currentUser.uid, "following"));
+      const followingIds = followingSnap.docs.map(doc => doc.id);
+
+      if (followingIds.length === 0) {
+        postList.innerHTML = `<p style="text-align:center;color:#777;">Kamu belum mengikuti siapa pun.</p>`;
+        return;
+      }
+
+      // Firestore batas where('in') max 10 item → ambil maksimal 10 dulu
+      const idsToQuery = followingIds.slice(0, 10);
+      q = query(postsRef, where("userId", "in", idsToQuery), orderBy("createdAt", "desc"));
+    }
+
+    // ==============================
+    // 🔹 FILTER: POPULER
+    // ==============================
+    else if (filterType === "populer") {
       const oneWeekAgoMs = Date.now() - 7 * 24 * 60 * 60 * 1000;
       const oneWeekAgo = new Date(oneWeekAgoMs);
-      // Jika createdAt disimpan sebagai Timestamp Firestore, gunakan where dengan Timestamp
-      // Pastikan import Timestamp jika perlu: import { Timestamp } from "firebase-firestore.js"
-      q = query(postsRef, where("createdAt", ">", oneWeekAgo), orderBy("likesCount", "desc"));
-    } else {
-      // 'terbaru' atau fallback
+      q = query(
+        postsRef,
+        where("createdAt", ">", oneWeekAgo),
+        orderBy("likesCount", "desc")
+      );
+    }
+
+    // ==============================
+    // 🔹 FILTER: JELAJAHI (TERBARU)
+    // ==============================
+    else {
       q = query(postsRef, orderBy("createdAt", "desc"));
     }
 
+    // ==============================
+    // 🔹 AMBIL DATA DAN RENDER
+    // ==============================
     const snapshot = await getDocs(q);
+
     if (snapshot.empty) {
       postList.innerHTML = `<p style="text-align:center;color:#777;">Belum ada postingan.</p>`;
       return;
     }
 
-    // renderPosts harus menerima (snapshot, postList) seperti implementasimu sebelumnya.
-    // Jika renderPosts berbeda, sesuaikan pemanggilan di bawah.
     renderPosts(snapshot, postList);
+
   } catch (err) {
     console.error("❌ Gagal loadPosts:", err);
     postList.innerHTML = `<p style="text-align:center;color:#d00;">Gagal memuat postingan.</p>`;
   }
 }
-
-
 // ==============================
 // 🧩 RENDER POSTINGAN
 // ==============================
