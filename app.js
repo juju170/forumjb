@@ -146,6 +146,27 @@ function loadHomePage() {
   const postList = document.getElementById("postList");
   const btnMengikuti = document.getElementById("btnMengikuti");
   const btnJelajahi = document.getElementById("btnJelajahi");
+  const btnMengikuti = document.getElementById("btnMengikuti");
+const btnJelajahi = document.getElementById("btnJelajahi");
+const jelajahiSelect = document.getElementById("jelajahiFilter");
+
+btnMengikuti.addEventListener("click", () => {
+  btnMengikuti.classList.add("active");
+  btnJelajahi.classList.remove("active");
+  jelajahiSelect.style.display = "none";
+  loadPosts("mengikuti");
+});
+
+btnJelajahi.addEventListener("click", () => {
+  btnMengikuti.classList.remove("active");
+  btnJelajahi.classList.add("active");
+  jelajahiSelect.style.display = "inline-block";
+  loadPosts(jelajahiSelect.value);
+});
+
+jelajahiSelect.addEventListener("change", () => {
+  loadPosts(jelajahiSelect.value);
+});
 
   if (!postList) {
     console.error("❌ Elemen #postList tidak ditemukan di halaman home.html");
@@ -168,7 +189,9 @@ function loadHomePage() {
       btnMengikuti.classList.remove("active");
     });
   }
+loadPosts("mengikuti");
 }
+
 
 // ==============================
 // 🧩 RENDER POSTINGAN
