@@ -271,7 +271,9 @@ function renderPosts(snapshot, postList) {
     postList.innerHTML = `<p style="text-align:center;color:#777;margin-top:40px;">Belum ada postingan 😢</p>`;
     return;
   }
+
   postList.innerHTML = "";
+
   snapshot.forEach((docSnap) => {
     const data = docSnap.data();
     const postId = docSnap.id;
@@ -290,37 +292,60 @@ function renderPosts(snapshot, postList) {
       : "Baru saja";
 
     const sortedComments = [...comments].sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0));
+
+    // 🔹 Tombol follow hanya muncul jika bukan posting sendiri
+    const followBtnHTML =
+      auth.currentUser && auth.currentUser.uid !== data.userId
+        ? `<button class="follow-inline-btn" data-userid="${data.userId}" data-email="${data.user}">➕ Ikuti</button>`
+        : "";
+
     const postHTML = `
       <div class="post-card fade-in" data-id="${postId}">
         <div class="post-header">
           <img src="${photo}" alt="User" class="post-avatar" />
           <div class="post-author">${user}</div>
+          ${followBtnHTML}
           ${isOwner ? `<div class="post-actions"><button class="edit-post-btn">✏️</button><button class="delete-post-btn">🗑️</button></div>` : ""}
         </div>
         <p class="post-text">${text}</p>
         ${image ? `<img src="${image}" class="post-img" loading="lazy" />` : ""}
         <div class="post-footer">
-  <button class="like-btn ${isLiked ? "liked" : ""}">❤️ ${likes.length}</button>
-  <button class="comment-btn">💬 ${comments.length}</button>
-  <button class="share-btn">🔗</button>
-  <button class="report-btn">🚨</button>
-  <small style="float:right;color:#888;">📅 ${time}</small>
-</div>
+          <button class="like-btn ${isLiked ? "liked" : ""}">❤️ ${likes.length}</button>
+          <button class="comment-btn">💬 ${comments.length}</button>
+          <button class="share-btn">🔗</button>
+          <button class="report-btn">🚨</button>
+          <small style="float:right;color:#888;">📅 ${time}</small>
+        </div>
         <div class="comment-box hidden">
           <input type="text" class="comment-input" maxlength="200" placeholder="Tulis komentar..." />
           <button class="send-comment">Kirim</button>
           <div class="comment-list">
-            ${sortedComments.map((c) => {
-              const isCommentOwner = auth.currentUser?.email === c.userEmail;
-              return `<p class="comment-item fade-in"><b>${c.user}</b>: <span class="comment-text">${c.text}</span>${
-                isCommentOwner ? `<span class="comment-actions"><button class="edit-comment">✏️</button><button class="delete-comment">🗑️</button></span>` : ""
-              }<br><small style="color:#888;">🕒 ${c.time || ""}</small></p>`;
-            }).join("")}
+            ${sortedComments
+              .map((c) => {
+                const isCommentOwner = auth.currentUser?.email === c.userEmail;
+                return `<p class="comment-item fade-in">
+                  <b>${c.user}</b>: <span class="comment-text">${c.text}</span>
+                  ${
+                    isCommentOwner
+                      ? `<span class="comment-actions"><button class="edit-comment">✏️</button><button class="delete-comment">🗑️</button></span>`
+                      : ""
+                  }
+                  <br><small style="color:#888;">🕒 ${c.time || ""}</small>
+                </p>`;
+              })
+              .join("")}
           </div>
         </div>
-      </div>`;
+      </div>
+    `;
+
     postList.insertAdjacentHTML("beforeend", postHTML);
   });
+
+  // 🔹 Jalankan fungsi follow di setiap posting
+  setupInlineFollowButtons();
+}
+
 
   // ==============================
 // 🔗 SHARE POSTINGAN
