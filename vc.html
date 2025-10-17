@@ -83,6 +83,9 @@
         <p id="status-message" class="mt-4 text-xl font-semibold text-gray-300">
             Siap Merekam
         </p>
+        <p class="text-xs text-gray-500 mt-1">
+            *Rekaman idealnya 10-20 detik untuk hasil AI yang cepat.
+        </p>
 
         <!-- Pesan Notifikasi/Error -->
         <div id="notification-message" class="mt-4 p-3 bg-red-800 text-white rounded-lg hidden">
@@ -175,7 +178,9 @@
         const MSG_ACCESS_FAIL = "Gagal mengakses mikrofon. Pastikan Anda memberikan izin.";
         const MSG_NO_PERSONA = "Peringatan: Silakan pilih salah satu persona terlebih dahulu!";
         const MSG_LOADING = "AI sedang berpikir keras... Harap tunggu.";
-        const API_KEY = ""; // Dibiarkan kosong
+        
+        // ** PENTING: API KEY DIBIARKAN KOSONG, AKAN DIURUS OLEH LINGKUNGAN CANVASS **
+        const API_KEY = ""; 
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
 
 
@@ -276,6 +281,12 @@
             if (isLoading) return; // Jangan mulai jika sedang memuat
 
             try {
+                // Tambahkan check dukungan MediaRecorder
+                if (!window.MediaRecorder || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    showNotification("Browser Anda tidak mendukung perekaman audio.", 'bg-red-800');
+                    return;
+                }
+                
                 stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
                 audioChunks = [];
@@ -357,9 +368,9 @@
                 // Instruksi Rinci untuk AI
                 const prompt = `Anda adalah Asisten Obrolan AI dengan Persona: ${selectedPersona.name}. Tugas Anda adalah menganalisis rekaman percakapan yang diberikan.
 
-LANGKAH 1: Transkripsi dan Pembedaan Pembicara (Diarization). Transkripsikan seluruh audio. Coba identifikasi dan labeli setidaknya dua pembicara berbeda sebagai 'Pembicara A' dan 'Pembicara B'. Format hasilnya sebagai daftar berurutan.
+LANGKAH 1: Transkripsi dan Pembedaan Pembicara (Diarization). Transkripsikan seluruh audio. Coba identifikasi dan labeli setidaknya dua pembicara berbeda sebagai 'Pembicara A' dan 'Pembicara B'. Format hasilnya sebagai daftar berurutan (contoh: 1. Pembicara A: "Halo," 2. Pembicara B: "Hai juga!").
 
-LANGKAH 2: Balasan Kontekstual. Bertindaklah sebagai '${selectedPersona.name}' dengan instruksi spesifik: "${selectedPersona.instruction}". Buat balasan teks yang relevan dan cerdas, ditujukan kepada Pembicara A atau B (siapa pun yang Anda anggap paling perlu dibalas), berdasarkan seluruh konteks percakapan.
+LANGKAH 2: Balasan Kontekstual. Bertindaklah sebagai '${selectedPersona.name}' dengan instruksi spesifik: "${selectedPersona.instruction}". Buat balasan teks yang relevan dan cerdas, ditujukan kepada Pembicara A atau B (siapa pun yang Anda anggap paling perlu dibalas) berdasarkan seluruh konteks percakapan. Pastikan saran balasan Anda TIDAK terlalu panjang, maksimal 2-3 kalimat.
 
 FORMAT OUTPUT:
 ---TRANSKRIPSI---
@@ -395,7 +406,9 @@ FORMAT OUTPUT:
                         });
 
                         if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
+                            // Coba dapatkan pesan error dari body response jika ada
+                            const errorText = await response.text();
+                            throw new Error(`HTTP Error ${response.status}: ${errorText.substring(0, 100)}...`);
                         }
 
                         const result = await response.json();
@@ -405,35 +418,37 @@ FORMAT OUTPUT:
                             displayAnalysisResult(text);
                             return; // Keluar dari loop jika berhasil
                         } else {
-                            throw new Error("Respon AI tidak mengandung teks yang valid.");
+                            throw new Error("Respon AI tidak mengandung teks yang valid (Body kosong atau error internal).");
                         }
                     } catch (error) {
                         if (i < maxRetries - 1) {
                             const delay = Math.pow(2, i) * 1000;
-                            console.warn(`Gagal memanggil API. Mencoba lagi dalam ${delay}ms...`, error);
+                            // console.warn(`API call failed (Attempt ${i + 1}/${maxRetries}). Retrying in ${delay}ms...`, error.message);
                             await new Promise(resolve => setTimeout(resolve, delay));
                         } else {
-                            throw error; // Lempar error jika semua percobaan gagal
+                            // Semua percobaan gagal
+                            throw new Error(`Semua percobaan API gagal setelah ${maxRetries} kali. Pesan: ${error.message}`);
                         }
                     }
                 }
 
             } catch (error) {
                 console.error("Kesalahan serius saat memproses AI:", error);
-                showNotification("Gagal mendapatkan respons AI: " + error.message, 'bg-red-800');
-                transcriptionContent.textContent = "Gagal memproses audio.";
-                replySuggestionContent.textContent = "Gagal memproses audio.";
+                const errorMessage = "Gagal mendapatkan respons AI. Coba rekam ulang dengan durasi yang lebih singkat (max 20 detik) atau periksa koneksi internet Anda.";
+                showNotification(errorMessage, 'bg-red-800');
+                
+                // Update UI hasil dengan pesan gagal yang jelas
+                transcriptionContent.textContent = "GAGAL: Audio tidak dapat diproses. Cek notifikasi di atas.";
+                replySuggestionContent.textContent = "GAGAL: Saran balasan tidak tersedia.";
             }
         }
         
         /**
          * Memisahkan dan menampilkan hasil transkripsi dan saran balasan.
-         * @param {string} fullTextOutput Output mentah dari model AI.
          */
         function displayAnalysisResult(fullTextOutput) {
             personaUsedBadge.textContent = selectedPersona.name;
 
-            // Cari dan pisahkan bagian Transkripsi dan Saran Balasan
             const transcriptionMarker = "---TRANSKRIPSI---";
             const replyMarker = `---SARAN BALASAN (${selectedPersona.name})---`;
 
@@ -488,9 +503,10 @@ FORMAT OUTPUT:
             notificationMessage.textContent = message;
             notificationMessage.className = `mt-4 p-3 text-white rounded-lg ${colorClass}`;
             notificationMessage.classList.remove('hidden');
+            // JANGAN gunakan alert() atau confirm()
             setTimeout(() => {
                 hideNotification();
-            }, 5000);
+            }, 8000); // Tampilkan error lebih lama
         }
 
         function hideNotification() {
